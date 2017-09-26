@@ -1,6 +1,9 @@
 Esta Aplicación es del curso de EDX aplicaciones móviles desarrolladas con patrones y buenas prácticas de Programación, en este caso vamos a usar Inyección de dependencias
 Vamos a mostrar Aplicación que muestra todos los archivos de imagenes y hashtags en nuestro muro gracias a Twitter ,
 
+Commit1 :ConfigGradleLibraries
+
+
 Pasos
     Vamos a https://apps.twitter.com/ y creamos una aplicación para trabajar en ella
     damos solo los permisos de lectura ya que vamos a solo a leer, mas no lo vamos a escribir ni publicar
@@ -200,4 +203,82 @@ En buildTypes
                         Twitter.initialize(config);
                     }
 
+
+
+
+
+Commit2
+
+    Recordemos que nos interesa acceder al home timeline del usuario a través del "statuses/home_timeline"
+    esto nos va devolver los tweets más recientes publicados por el usuario autenticado y los
+    usuarios a los que este usuario les ha dado follow,
+
+    pero eso no viene por defecto soportado por "Twitter", entonces va ser necesario extender el API y está pensado
+    para que lo podamos ver de una manera muy sencilla, está usando "retrofit" que es una
+    librería pensada para peticiones de APIS,
+
+
+    requiere extensión un servicio y un cliente, tal como lo soporta
+    "retrofit" entonces el servicio, vamos a pedirlo directamente a hacia "statuses/home_timeline"
+    con alguna de las variables que hemos visto como
+        "count"
+        "trim_user"
+        "exclude_replies"
+        etcétera
+
+
+    Podemos observar mas sobre este tema en https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-home_timeline.html
+
+
+
+
+    Además el cliente va extender de un "TwitterApliClient" de esta forma puedo
+    inicializar las peticiones que eventualmente pueda hacer,
+
+    vamos a crear un paquete nuevo y este le llamamos "API", dentro del mismo vamos a crear unas clases, de hecho la primera
+    es una interfaz, esta interfaz, le vamos a llamar "timelineservice" y aquí vamos a especificar
+    cuales el "endpoint" que queremos,
+    nos interesa una petición "get" hacia "1.1/statuses/home_time_line.json"
+    y este es por petición la vamos hacer por un método "homeTimeLine" que va recibir varios
+    parámetros y uno de los parámetros va ser un "callback" a ejecutar cuando termine, entonces
+    los parámetros incluyen
+    un "count" a este lo vamos a llamar "count" de tipo "integer"
+    también "trim_user" estos parámetros están especificados en el API de Twitter y los especificamos en mas arriba,
+    "include_entitles"
+    el "Query" de quien contribuye, que incluya las entidades que nos va servir para obtener imágenes y hashtags
+    por ultimo "callback" este "callback" va ser sobre un listado de tweets, estos tweets no son tweets que yo estoy definiendo sino es de lo que me provee
+    "twitter" entonces le vamos a poner a este nombre "callback" y estamos listos con el
+    servicio,
+
+    Interfaz TimeLineService
+            @GET("/1.1/statuses/home_timeline.json")
+            void homeTimeline(@Query("count") Integer count,
+                              @Query("trim_user") Boolean trim_user,
+                              @Query("exclude_replies") Boolean exclude_replies,
+                              @Query("contributor_details") Boolean contributor_details,
+                              @Query("include_entities") Boolean include_entities,
+                              Callback<List<Tweet>> callback);
+
+
+    Debemos pasar a crear también un cliente, este le vamos a llamar "customTwitterApiClient"
+    y va heredar de "TwitterApiClient" lo cual me forza a tener un constructor con la "session"
+    y vamos a darle también un "get" "TimeLineService getTimeLineServices" entonces a través de
+    la interfaz, voy a exponer cual es vamos "getService(TimeLineService.class)"
+
+    'a través del interfaz voy a exponer cual es la forma de acceder a este API y a través del cliente voy a poder obtener esa interfaz todo lo demás lo va implementar Twitter',
+    entonces no nos debemos preocupar mucho en la sesión, etcétera, sino simplemente del "endpoint",
+    es decir no nos interesa el BaseUrl de Retrofit ya que en esata clase le especificamos el servicio
+    y twitter tiene ya embebido cual es el link y configurado , solo nos preocupamos como ya dije del "endpoint" (URL a realizar un GET)
+
+
+            public class CustomTwitterApiClient extends TwitterApiClient {
+
+                public CustomTwitterApiClient(TwitterSession session) {
+                    super(session);
+                }
+
+                public TimeLineService getTimeLineService(){
+                    return getService(TimeLineService.class);
+                }
+            }
 
