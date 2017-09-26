@@ -283,7 +283,7 @@ Commit2 ":2EndConfigurationAPI"
             }
 
 
-Commit3
+Commit3 :Librerias(EventBus-Glide)
     Librerías
 
 
@@ -374,5 +374,101 @@ Commit3
 
          Ahora este "glideRequestManager" debería estar definido por Glide.whit(context) pero lo veremos mas adelante
 
+NOTA:Podemos encontrar mas información dentro de https://code.tutsplus.com/es/tutorials/code-an-image-gallery-android-app-with-glide--cms-28207
 
 
+Commit4 : DependencyInjectionConfiguration
+
+        Ahora procedemos a crear un package nuevo y le vamos a llamar "DI" de "Dependence Injection" y voy a implementar aquí lo necesario para la inyección de dependencias,
+
+        La dependencias con "dagger 2" va necesitar dos clases, de hecho una es una interfaz, es decir una clase y una interfaz
+
+        En la clase, es la que provee la inyección como tal
+        En la interfaz, se va a definir el "API" de cómo inyectar, ,
+
+
+        Definimos primero la clase para este ejemplo
+        a esta le vamos a llamar "LibsModule" es un módulo y le colocamos la anotación de modulo
+        que voy a necesitar proveer, voy a necesitar proveer un
+                "EventBus" y un "ImageLoader" hasta el momento
+
+        vamos a colocar un método que devuelva un "EventBus" y se llame "ProvidesEventBus" y
+        este lo que tiene que recibir es una instancia de el Bus de eventos que tengo en mi constructor
+        en "GreenRobotEventBus" y en base a esto va ser un "return new GreenRobotEventBus" usando el parámetro recibido,
+        voy agregarle una anotación aquí, que diga que es un "Singleton" es decir que solo va a ver una instancia y que es un método
+        que provee, debemos tomar en cuenta que debemos devolver el EventBus que nosotros hemos definido,
+
+
+
+        Necesito definir de donde va venir este "EventBus", entonces necesito hacer otro
+        método que devuelva una instancia de este tipo le vamos a llamar " providesLibraryEventBus"
+        y esto no va recibir absolutamente nada, y lo que va devolver es, una instancia a partir
+        de "eventBus.getDefault" veamos "eventBus.EventBus"
+
+         En síntesis de la librería pasa a mi objeto que eventualmente devuelve este genérico,algo cascada
+
+            @Provides
+                @Singleton
+                EventBus providesEventBus(org.greenrobot.eventbus.EventBus eventBus) {
+                    return new GreenRobotEventBus(eventBus);
+                }
+
+                @Provides
+                @Singleton
+                org.greenrobot.eventbus.EventBus providesLibraryEventBus() {
+                    return  org.greenrobot.eventbus.EventBus.getDefault();
+                }
+
+        Vamos hacer algo similar, para tener, un "providesImageLoader" entonces vamos
+        a colocarle aquí "providesImageLoader" y voy a necesitar instanciar a "GlideImageLoader"
+        que recibe un "RequestManager"
+        entonces vamos a recibir como parámetro un "RequestManager", entonces tengo que hacer otro "provides" específico
+        para esto, que va a devolver un "RequestManager" le llamamos "providesRequestManager" esto
+        no va a recibir absolutamente nada de parámetros y vamos a devolver aquí un "Glide.with" y
+        allí donde necesito un contexto, entonces tengo varias opciones, podría ser que recibo
+        un contexto que inyecte un contexto así como estoy haciendo un módulo para las librerías,
+        podría ser un módulo para la actividad, la aplicación completa del "Twitter Client App" en este caso lo que voy a hacer es definir aquí un fragmento "private Fragment Fragment"
+        y en el constructor lo voy a recibir, entonces lo que va a recibir este "providesRequestManager"
+        para este caso puntual va ser un fragmento, entonces hacemos un "Glide.whith" con ese
+        fragmento y  de la misma forma voy a tener un "providesFragment" para proveérselo al "RequestManager"
+        y lo que vamos a devolver es un fragmento que ha recibido este módulo
+        y lo que voy a devolver es el fragmento que recibió este módulo,
+        entonces si se dan cuenta como una cascada a través de la cual voy proveyendo dependencias
+        lo que esto me permite, ya termino la construcción ya está compilado a veces me da un problema
+        al compilar cuando estoy modificando estas clases entonces tengo que compilar dos veces,
+        para que queden sin ningún problema, recuerden "dagger" está generando en tiempo de compilación
+        varias anotaciones y entonces compilar algunas veces no encuentra esas clases necesarias cuando quiere instanciar
+        el modulo, en esta caso ya está compilado,
+
+            @Provides
+            @Singleton
+            ImageLoader providesImageLoader(RequestManager requestManager) {
+                return new GlideImageLoader(requestManager);
+            }
+
+            @Provides
+            @Singleton
+            RequestManager providesRequestManager(Fragment fragment) {
+                return Glide.with(fragment);
+            }
+
+
+            @Provides
+            @Singleton
+            Fragment providesFragment() {
+                return this.fragment;
+            }
+
+
+        de esta forma estoy proveyendo las dependencias
+        de las librerías, si yo fuera usar un "GlideImagenLoader" o un "org.greenrobotEventBus" en alguna clase,
+        tendría que especificar un "LibsComponent" así como tengo este "LibsModule" y allí
+        especifico como se va a inyectar, ya sea con un método genérico "inject" especificando
+        cual es la clase que lo va usar, usualmente un "Activity" o "Fragment" o bien con métodos
+        que dicen como obtengo alguno de estos elementos que estoy proveyendo, por ejemplo podría
+        tener un "getImageLoader" sin embargo no voy a hacerlo tal cual, sino voy a hacerlo a través
+        de otro módulo de inyección, entonces no voy a escribir un componente en este momento,
+        sino que cuando escriba el modulo componente correspondiente, alguno de los "Feature" o
+        características que voy a estar trabajando, voy a vincular con este módulo que ya existe,
+        por el momento dejamos hasta allí el módulo de librerías con sus respectivos inyección
+        de dependencias.
