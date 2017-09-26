@@ -207,7 +207,7 @@ En buildTypes
 
 
 
-Commit2
+Commit2 ":2EndConfigurationAPI"
 
     Recordemos que nos interesa acceder al home timeline del usuario a través del "statuses/home_timeline"
     esto nos va devolver los tweets más recientes publicados por el usuario autenticado y los
@@ -281,4 +281,98 @@ Commit2
                     return getService(TimeLineService.class);
                 }
             }
+
+
+Commit3
+    Librerías
+
+
+    Seguimos con el desarrollo pero en este caso vamos a crear el árbol del proyecto vamos a trabajar con diferentes librerías
+
+    Creamos un paquete para las librerías y como habíamos hecho con el Chat teníamos hecho envoltorios de estas librerías,
+    estos envoltorios especificaban, una serie de clases "base", en este caso yo he definido dos aquí, con cosas básicas que es lo que voy a usar de la librería
+
+
+        lib
+            base(interfaz)
+                "eventoBus"
+                "imageLoader"
+
+
+
+    luego las implementaciones específicas que íbamos a usar por ejemplo comenzamos para EventBus
+            "GreenRobotEventBus" y va implementar de"eventBus", el EventBus que yo generé
+            "GlideImageLoader" y va implementar de "ImageLoader"
+
+        lib
+
+           GreenRobotEventBus
+           ImageLoader
+
+           base
+               ...
+
+
+    Entonces voy a tener un "org.GreenRobot.EventBus eventBus" y sobre este voy a trabajar entonces
+        "eventBus.register(subscriber)"
+        "eventBus.unregister(subscriber)" y
+        "eventBus.post" del evento
+
+    Lo que había hecho hasta el momento, era tener un "Singleton" en vez de eso vamos a colocar un constructor que me va permitir acceder,
+    lo voy a recibir de aquí, y lo voy a inyectar cuando lo necesite la clase y de esa forma voy a poder proveer esa clase, para cuando lo utilicen la clases
+    que voy a implementar eventualmente
+
+     Antes para tener un Singleton
+                private static class SingletonHolder{
+                    private  static  final GreenRobotEventBus INSTANCE= new GreenRobotEventBus();
+                }
+
+                public static  GreenRobotEventBus getInstance (){
+                    return SingletonHolder.INSTANCE;
+                }
+
+                public GreenRobotEventBus() {
+                    this.eventBus = org.greenrobot.eventbus.EventBus.getDefault();
+                }
+
+    Ahora con Inyección de Dependencias, ya que luego los configuro queda así
+
+                org.greenrobot.eventbus.EventBus eventBus;
+
+                public GreenRobotEventBus(org.greenrobot.eventbus.EventBus eventBus) {
+                    this.eventBus = eventBus;
+                }
+
+
+
+    Ahora sí, y de la misma manera voy hacer un "GlideImageLoader" que
+    implemente un "ImageLoader" eso me forza a implementar el
+             vamos a agregar un "private RequestManager glideRequestManager"
+
+             Método de "load",dentro del cual vamos hacer "glideRequestManager.Load" ponemos el "URL"
+             vamos hacer "diskCacheStrategy(DiskCacheStratefy.ALL)" esto es para que los cachea información original y datos transformados
+             luego centerCrop, para que vaya centrado
+             vamos hacer un "override" del tamaño para que las imágenes siempre sean de ese tamaño
+             que lo cargue dentro del "imageView" y listo,
+
+
+         No hemos encontrado estos elementos directo por lo que tuvimos que implementar RequestOptions para poner las opciones y luego cargarla quedando de la siguiente manera
+         En GlideImageLoader
+                 public void load(ImageView imgAvatar, String url) {
+                        RequestOptions requestOptions = new RequestOptions();
+                            requestOptions
+                                    .centerCrop()
+                                    .override(600, 400)
+                                    .diskCacheStrategy(DiskCacheStrategy.ALL);
+                        glideRequestManager
+                                .load(url)
+                                .apply(requestOptions)
+                                .into(imgAvatar);
+
+                }
+
+
+         Ahora este "glideRequestManager" debería estar definido por Glide.whit(context) pero lo veremos mas adelante
+
+
 
