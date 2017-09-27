@@ -472,3 +472,106 @@ Commit4 : DependencyInjectionConfiguration
         características que voy a estar trabajando, voy a vincular con este módulo que ya existe,
         por el momento dejamos hasta allí el módulo de librerías con sus respectivos inyección
         de dependencias.
+
+
+Commit5:
+
+
+    Como vemos aún no tenemos nada en nuestro login, y vamos agregar aquí una referencia
+    a un "widget" de Twitter, para el layout` eso está en "com.twitter.sdk.android.core.identity.TwitterLoginButton"
+    este elemento tiene que tener por lo menos, ancho y alto vamos a usar "wrap_content" vamos a centrar
+    y por ultimo le ponemos un identificador, este identificador nos va servir para obtenerlo
+    en la clase por el momento, es posible que algún error y lo quiero reportar aquí, le vamos a agregar un identificador
+     al "container" le vamos a llamar "container", este nos sirve para el snackbar
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                        android:id="@+id/container"
+            ...
+                <com.twitter.sdk.android.core.identity.TwitterLoginButton
+                        android:id="@+id/twitterLoginButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        />
+
+    Ahora procedemos aquí hacer la inyección de vistas con "bufferKnife" me interesan las únicas dos vistas que tengo
+    el botón y el "relativeLayout", y vamos a especificar al botón se llama "TwitterLoginButton.setCallBack" este "CallBack" lo vamos a hacer en base a
+    la sesión y solo tengo dos resultados, éxito o fracaso,
+     En éxito vamos a hacer "navigateToMainScreen" voy a necesitar una actividad "main" eventualmente y si fallo,
+     vamos a reportar un error de porque fallo, con el snackbar
+    En las inyecciones de Butterknife tengo un problema al hacer el render del botón de Twitter por lo que la instancia me ha tocado hacer de forma manual
+
+
+        twitterLoginButton=(TwitterLoginButton)findViewById(R.id.twitterLoginButton);
+
+
+
+                twitterLoginButton.setCallback(new Callback<TwitterSession>() {
+                    @Override
+                    public void success(Result<TwitterSession> result) {
+                        navigateToMainScreen();
+                    }
+
+                    @Override
+                    public void failure(TwitterException exception) {
+
+                        ....Error
+                    }
+                });
+
+
+
+    vamos a crear este método "navigateToMainScreen"
+    me va a cambiar de actividad entonces a crear de una vez un nuevo paquete que le llamamos
+    "main" y dentro de este paquete "main" vamos a crear una nueva actividad nueva vacía,
+
+
+    Volvemos aquí al "loginActivity" aquí lo que vamos a hacer es un "StartActivity (new Intent(this, MaingActivity.class))"
+
+        private void navigateToMainScreen() {
+            startActivity(new Intent(this, MainActivity.class));
+        }
+
+    Necesitamos también sobrecargar con "onActivityResult"
+    para cuando nos regrese el SDK de Twitter hacia nuestra actividad y le vamos a poner
+    aquí al botón, "twitterLoginButton.onActivityResult()" y le enviamos los mismos parámetros "resultCode"
+    "data" esta forma que el mismo botón va ejecutar esto y si tengo éxito me va a llevar al "MainActivity"
+
+        @Override
+        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            twitterLoginButton.onActivityResult(requestCode,resultCode,data);
+        }
+
+
+    En caso que no pueda tener un buen inicio de sesión vamos a mostrar un error, este error debería tener un poco de detalle y
+    tenemos un "twitterException" de que podemos obtener algo, pero vamos a agregar un mensaje
+    en "String.xml" en este mensaje vamos a especificar que no se pudo iniciar la sesión y que tengo
+    un string adicional para especificar lo que sea que recibí de parte de "Twitter".
+
+    Entonces aquí vamos a mostrarlo con un "Snackbar" la forma de hacerlo es "msgError = String.format(getString)"
+    y le envió este "String" que acabo de agregar y además le envió "e" de la excepción "e.getLocalizerMessage"
+    para que me dé algo en base a la localización del usuario me refiero a idioma etcétera
+    y luego hago un "SnackBar.make" necesito enviar una vista para eso me va servir el "container"
+    y luego el mensaje de error tiene duración corta y lo mostramos,
+
+                String msgError = String.format(getString(R.string.login_error_message), exception.getMessage());
+                 Snackbar.make(container, msgError, Snackbar.LENGTH_SHORT).show();
+
+
+    Recuerden yo ya tengo mi aplicación configurada y en este caso no tengo el cliente de Twitter
+    instalado, entonces me va pedir que inicie sesión aquí, vamos a iniciar sesión, autorizamos
+    en API, en este caso ya había autorizado el APP porque soy el desarrollador y listo,
+    allí me dirigió a la nueva actividad.
+    Sin embargo si cerramos la aplicación,
+    volvemos a abrirla aquí está el "TwitterClient" me vuelve a
+    pedir login, esto es algo incómodo, entonces vamos a corregir aquí que si ya existe una
+    sesión la podamos reutilizar, escribimos
+
+    "if(TwitterCore.getInstance().getSessionManager().getActiveSession() = Null)" es diferente que null entonces
+    que me lleve a la pantalla principal y volvemos a ejecutar, vamos a decirle que use el mismo emulador para la siguiente vez, está listo
+    y ahora ya tengo la sesión iniciada
+
+                if (TwitterCore.getInstance().getSessionManager().getActiveSession() != null) {
+                                    navigateToMainScreen();
+                    }
