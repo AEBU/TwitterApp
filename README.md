@@ -474,7 +474,7 @@ Commit4 : DependencyInjectionConfiguration
         de dependencias.
 
 
-Commit5:
+Commit5: :TwitterLoginDocumentation
 
 
     Como vemos aún no tenemos nada en nuestro login, y vamos agregar aquí una referencia
@@ -575,3 +575,127 @@ Commit5:
                 if (TwitterCore.getInstance().getSessionManager().getActiveSession() != null) {
                                     navigateToMainScreen();
                     }
+
+
+    NOTA: Toda esta parte la hemos sacado de la documentación oficial de Twitter
+        https://dev.twitter.com/twitterkit/android/log-in-with-twitter
+
+
+
+Commit6 :layoutActivityMain
+
+    Nuestra aplicación va tener una visualización en este formato:
+            con un encabezado,
+            el nombre del APP,
+            un menú donde vamos a poder cerrar sesión
+            tabs o pestañas una de ellas va mostrar contenido de imágenes y la otra de "Hastags", voy a poder cambiar a través de
+            hacer clic en el encabezado, donde están los nombres de los tabs o a través de un "drag"
+
+            eso quiere decir que voy a usar un "ViewPager" voy a tener una actividad principal "MainActivity" que va ser el "Host" y ambos, tanto imágenes como Hashtags van a ser fragmentos
+            que van a presentar el contenido específico
+
+    Comenzamos editando el layout
+
+    esta actividad, vamos a empezar agregando unos "strings" para esta actividad
+
+            <string name="main.header.images">Imágenes</string>
+            <string name="main.header.hashtags">Hashtags</string>
+            <string name="main.menu.action.logout">Cerrar sesión</string>
+
+
+    vamos a ir a "activityMain" para modificar el contenido
+    Colocamos un "coordinatorLayout" en ves de  un RelativeLayout le doy su respectivo contexto respectivo
+
+
+
+
+    entonces voy a tener un "coordinatorLayout"
+    que lo va ser es coordinar los elementos dentro de él,
+    allí adentro un "appbarLayout"
+        adentro un "toolbar"
+        este "toolbar" va tener la parte del menú, el nombre de la aplicación incluso que el usuario inicio sesión
+    los tabs
+    adentro del contenido principal
+        vamos a tener un "viewPaper"
+
+
+En activity_main.xml
+    <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/main_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        tools:context=".main.MainActivity">
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/appbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/appbar_padding_top"
+            android:theme="@style/AppTheme.AppBarOverlay">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorPrimary"
+                app:layout_scrollFlags="scroll|enterAlways"
+                app:popupTheme="@style/AppTheme.PopupOverlay">
+
+            </android.support.v7.widget.Toolbar>
+
+            <android.support.design.widget.TabLayout
+                android:id="@+id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </android.support.design.widget.AppBarLayout>
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+
+
+    adicional a esto vamos a crear un
+    archivo aquí mismo y le vamos a llamar a este "fragment_content" para especificar que
+    va ser el "layout" de un fragmento pero en los dos casos vamos a mostrar contenido similar,
+    en los dos casos van a ser listados, entonces vamos a editarlo de tal forma que podamos
+    reutilizarlo para las dos vistas de nuestra aplicación
+
+
+    lo que tenemos aquí entonces es un Framelayout para que se vean los elementos encima de otros
+    dentro
+        vamos a poner un "android.support.v7.widget."
+            le vamos agregar también que tenga un ancho y alto
+            en este ancho y alto le vamos a poner que el ancho ocupe todo, pero del alto únicamente lo necesario
+            por supuesto tiene que llevar un identificador este identificador va ser "RecyclerView"
+
+        además vamos poner un "progressBar"
+            tamaño grande y centrado
+            lo vamos a dejar solo centrado, para que este solo horizontal y verticalmente,
+        entonces esta mi listado y encima está el "progressBar" solamente uno de los dos se va ver a la vez su "progressBar" le vamos
+        a poner "visibility =gone""
+
+
+    fragment_content
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        ...
+        >
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/progressBar"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+    </FrameLayout>
