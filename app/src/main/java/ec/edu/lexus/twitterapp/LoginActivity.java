@@ -8,7 +8,6 @@ import android.widget.RelativeLayout;
 
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
-import com.twitter.sdk.android.core.Twitter;
 import com.twitter.sdk.android.core.TwitterCore;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
@@ -16,11 +15,11 @@ import com.twitter.sdk.android.core.identity.TwitterLoginButton;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import ec.edu.lexus.twitterapp.main.MainActivity;
+import ec.edu.lexus.twitterapp.main.ui.MainActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
-
+    @BindView(R.id.twitterLoginButton)
     TwitterLoginButton twitterLoginButton;
     @BindView(R.id.container)
     RelativeLayout container;
@@ -30,7 +29,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-        twitterLoginButton=(TwitterLoginButton)findViewById(R.id.twitterLoginButton);
 
         if (TwitterCore.getInstance().getSessionManager().getActiveSession() != null) {
             navigateToMainScreen();
@@ -57,6 +55,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void navigateToMainScreen() {
-        startActivity(new Intent(this, MainActivity.class));
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

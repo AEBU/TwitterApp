@@ -699,3 +699,73 @@ En activity_main.xml
             android:layout_gravity="center"
             android:visibility="gone" />
     </FrameLayout>
+
+    tomemetos en cuenta que cuando creamos un Framelayout debemos quitra la orientación (Vertical-Horizontal)
+
+Commit7
+
+    Vamos a agregar un menú para el cierre de sesión,
+    Primero editamos el "Layout" para esto creamos un nuevo directorio y a este le llamamos menú y bajo este menú,
+        vamos a crear un nuevo recurso de menú, que le vamos a llamar "menu_mail.xlm"
+        aquí vamos agregar un "item" ese "item" va ir asociado a la actividad
+
+        Para ver como funciona un menu y las propiedades podemos ver https://developer.android.com/guide/topics/ui/menus.html?hl=es-419 y verificar que no mas hace cada configuración
+
+        <menu xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            tools:context=".main.ui.MainActivity">
+            <item
+                android:id="@+id/action_logout"
+                android:orderInCategory="100"
+                android:title="@string/main.menu.action.logout"
+                app:showAsAction="never" />
+        </menu>
+
+
+
+    Creamos un paquete main y en este damos nuestra lógica
+        main
+            ui
+              ...Activity, Fragments, Views
+
+            adapters
+              ...Images, adaptadores para recyclerView
+
+
+    Desde el "main activity" vamos a trabajar,
+    entonces necesito sobrecargar dos métodos aquí,
+
+            vamos a sobrecargar "onCreateOptionMenu"
+                inflamos aquí "getMenuInflater().inflater(R.menu.menu_main
+
+            vamos a "onItemSelected"
+                Aquí vamos a verificar si acaso el "if(item.getIdemId() == R.id.action_logout)"
+
+            entonces hacemos una llamada a "logout" este método aún no existe, lo vamos a crear y
+            hacemos un "TwitterCore.getInstance().clearAuth"
+
+            Además de eso vamos a llevar al usuario hacia la pantalla principal con un "intent" "intent=new Intent(this, LoginActivity.class)" pero le vamos agregar
+            un par de banderas para que el usuario
+                    no pueda al darle "back" cuando está en la pantalla
+                    del "login" volver a esta pantalla, por ultimo iniciamos la actividad y listo, con esto tenemos
+                    el "logout" necesito agregar el "toolBar" para hacer "Sign Up" y todo lo que tengo que hacer
+                    aquí es "setSupportActionBar(toolbar)" volver a ejecutar y vamos a ver como quedo ahora,
+                    ahora si tengo un "logout" entonces con eso puedo cerrar sesión, cuando este aquí con
+                    la sesión iniciada y le doy "back"
+
+                    TwitterCore.getInstance().getSessionManager().clearActiveSession();
+                            Intent intent = new Intent(this, LoginActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    | Intent.FLAG_ACTIVITY_NEW_TASK
+                                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+
+
+            Tenemos un problema similar a las banderas en "loginActivity" por lo que procedemos agregarlos aquí
+            volvemos a ejecutar entonces ahora que le dé "Back" de "loginActivity" no me va a regresar a "Main"
+            y de "Main" cuando le dé "Back" no me va a regresar a "login" entonces estoy aquí
+            en la pantalla principal, puedo cerrar sesión le doy "Back" todavía no me regresa "login"
+            abro el cliente otra vez, le doy cerrar sesión me lleva "LoginActivity" le doy "Back" y tampoco
+            me regresa al contenido principal,
+
