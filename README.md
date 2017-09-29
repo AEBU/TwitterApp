@@ -1123,7 +1123,7 @@ Commit11 :ImagesAdapter
             holder.txtTweet.setText(tweet.getTweetText());
             imageLoader.load(holder.imgMedia, tweet.getImageURL());
 
-Commit12
+Commit12 :ImagesFragmentView
 
     Fragment y View
         (ImagesFragment)
@@ -1210,5 +1210,146 @@ Commit12
     dentro del repositorio previo a probarlo ,en este caso como vamos hacer la inyección entonces
     voy a implementar todo esto que no son métodos muy largos y luego voy a implementar la inyección
     y luego lo voy a probar.
+
+
+Commit13 :PresenterEInteractorImages
+
+    EN ImagesEvent
+
+    Vamos implementar el "imagesEvent" que es el que usaremos para EventBus,
+    para mi evento yo necesito dos cosas,
+
+        1.-Un error por si acaso ocurrió, podría ser "null"
+        2.-Un listado de imágenes que obtuve del "API"
+        Hacemos getters y setters a los dos
+
+            private String error;
+            private List<Image> images;
+
+    Aquí hay varias cosas que podemos implementar por ser una clase de EventBus por lo que usaremos
+    la documentación que voy a poner a continuación, ya que tiene buenos ejemplos de como usarlo y para que usarlo, por ejemplo como un LocalBroadcastRecebier
+
+        http://katade.com/2016/03/15/eventbus-gestor-de-eventos-para-android/
+        http://blog.intive-fdv.com.ar/eventbus-una-alternativa-al-broadcastreceiver/
+
+
+    Seguimos...
+    En la vista voy a necesitar un presentador que voy a eventualmente inyectar,
+    pero por el momento vamos a crear un "imagesPresenterImplementation" y esta va ser una clase que implementa a "ImagesPresenter"
+    por lo tanto estoy obligado a incluir algunos de esos métodos,(Siguiendo con el stack que hemos creado) que voy a necesitar aquí,
+
+        Voy a necesitar un "eventBus" para detectar los eventos, para registrarme y deregistrarme
+        Voy a necesitar la clase también "ImagesView" que es el contrato de la vista la los métodos que voy a implementar eventualmente el fragmento
+        Un "ImagesInteractor"
+
+
+                    private EventBus eventBus;
+                    private ImagesView view;
+                    private ImagesInteractor interactor;
+
+        Luego en el constructor lo recibo todos, que vamos hacer en estos métodos,
+
+                      public ImagesPresenterImpl(EventBus eventBus, ImagesView view, ImagesInteractor interactor) {
+                        this.eventBus = eventBus;
+                        this.view = view;
+                        this.interactor = interactor;
+                    }
+
+
+    En onResume al resumir nos vamos a registrar, vamos a registrar el presentador
+    con un "subcriber"
+
+                    @Override
+                    public void onResume() {
+                        eventBus.register(this);
+                    }
+
+    En un "onPause" vamos a deregistrar
+
+                    @Override
+                    public void onPause() {
+                        eventBus.unregister(this);
+                    }
+
+    a la hora que se destruya entonces
+    la vista se vuelve nulo
+
+                    @Override
+                    public void onDestroy() {
+                        view=null;
+                    }
+
+    En "getImageTweets" vamos hacer es vamos a revisar si acaso la
+    vista es diferente de "null" entonces llamamos un par de métodos de la vista
+            "hideImages"  para esconder el contenido
+            "showProgress" vamos hacer
+    Llamamos al interactuador con interactor.execute();
+
+
+                @Override
+                public void getImageTweets() {
+                    if (this.view != null){
+                        view.hideElements();
+                        view.showProgress();
+                    }
+                    this.interactor.execute();//this.interactor.getImageItemsList();
+                }
+    Lo opuesto en "onEventMainThread" entonces aquí, este método va a ser el que se subscribe
+            mostramos "showImages"
+            escondemos "hideProgress"
+
+            @Override
+            @Subscribe
+            public void onEventMainThread(ImagesEvent event) {
+                String errorMsg = event.getError();
+                if (this.view != null) {
+                    view.showElements();
+                    view.hideProgress();
+                    if (errorMsg != null) {
+                        this.view.onError(errorMsg);
+                    } else {
+                        this.view.setContent(event.getImages());
+                    }
+                }
+            }
+
+    Algo para hacer incapié aca, debemos tomar en cuenta que este método va a ser el que subscribe  por eso "@Subscribe" y al recibir algo
+    tengo que validar si acaso hay o no hay un error y si lo hay
+    lo voy a mostrar entonces vamos hacer "String errorMsg = event.getError" entonces mostramos
+    las imágenes ocultamos el "progressBar" y luego verificamos si el mensaje de error es
+    diferente de "null" quiere decir que ocurrió un error entonces vamos a decir "view.onError"
+    y le enviamos el "errorMsg" y de lo contrario "view.setContent" y hacemos un "event.getImages"
+    todo esto va dentro de la validación
+
+
+
+    Tengo mi presentador y mi evento implementados y ahora puedo proceder al interactuador
+
+    El interactuador, vamos a crear su implementación, va ser una clase "ImagesInteractorImpl" e implementa al contrato
+    que ya tenía definido previamente "ImagesInteractor" quiere decir que voy a estar obligado a tener un
+    método "execute" y aquí vamos a declarar un "ImagesRepository" que en el constructor
+    voy a recibir
+
+        ImagesRepository repository;
+
+        public ImagesInteractorImpl(ImagesRepository repository) {
+             this.repository = repository;
+        }
+
+
+    Al ejecutar voy a decir "repository.getImages"
+        @Override
+        public void execute() {
+            repository.getImages();
+        }
+
+    Por ultimo tengo que tener un "RepositoryImplementation"
+    este es una clase e implementa "ImagesRepository" listo, entonces en "getImages" es donde voy
+    a colocar todo el contenido y aquí voy a necesitar un par de cosas cuando vayamos a
+    implementar el repositorio.
+        @Override
+        public void getImages() {
+
+        }
 
 
