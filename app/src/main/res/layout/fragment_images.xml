@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ec.edu.lexus.twitterapp.images.ImagesFragment">
+    tools:context="ec.edu.lexus.twitterapp.images.ui.ImagesFragment">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView

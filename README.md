@@ -928,7 +928,8 @@ Commit9 :LayoutImagesFragment
 
 
 
-Commit10
+Commit10 :ImagesFragmentMVP
+
     Arquitectura MVP, vamos a definir nuestra Arquitectura MVP para usarla dentro de Images
 
     Definimos primero todas las interfaces que definien abstracciones
@@ -975,6 +976,152 @@ Commit10
     se van a basar en estas abstracciones para presentarme los resultados de este Feature que va a traer imágenes
 
 
+Commit11 :ImagesAdapter
+    Procedemos a realizar un adaptador del recyclerView de nuestra vista
+
+    En Entity Images procedemos a crear sus atributos
+
+    necesitamos una forma de identificarlas,
+    necesitamos también cual es el URL para ir a traerlas con "Glide" y mostrarlas
+    necesitamos saber cuál es el texto asociado
+    necesitamos saber cuál es la cantidad de conteo de favoritos porque en base a esto vamos a ordenar
+    necesitamso una acción que al darle click nos lleve al "tweets" entonces vamos a definir
+    aquí una constante que se llame "BASE_TWEET_URL =" y lo vamos asignar hacia este "string"
+    para ir a traer el "tweet"
+
+        private String id;
+        private String imageURL;
+        private String tweetText;
+        private int favoriteCount;
+
+
+    Como nota podemos agregar un detalle con la forma en que Twitter devuelve los resultados,
+    cuando queremos acceder a un tweet por su identificador el problema que tenemos es que
+    nos redirige a "m.twitter" y a veces este no existe, entonces por eso estamos usando
+    esta forma para redirigir hacia el contenido
+
+        private final static String BASE_TWEET_URL = "https://twitter.com/null/status/";
+
+
+    Vamos hacer "Getter" y "Setter" para todos
+    y por ultimo vamos hacer un "public string getTweetUrl" y aquí hacemos un "return BASE_TWEET_URL" concatenado el "this.Id"
+
+        public String getTweetURL() {
+            return BASE_TWEET_URL + this.id;
+        }
+
+
+    Creamos nuevo paquete en Images para la vista
+
+        Images
+            ui
+                adapters
+                    ImagesAdapter
+
+
+    "ImagesAdapter" aquí voy a trabajar en este momento que características tiene la clase, como funciona con un "RecyclerView"
+    necesito que herede de "ReclyclerView.Adapter", defino el "ViewHolder" lo voy a definir aquí con
+    un "private class Viewholder" que hereda del "RecyclerView.Viewholder" por tanto tiene
+    que tener un constructor y por lo tanto vamos a implementar los métodos necesarios le puedo
+    especificar aquí que tipo de "holder" va usar y quiero que use un "Viewholder" "Viewholder"
+    de mi clase, "imagesAdapter"
+
+        Pasos para crear el adaptador, con su Interfaz de Click siempre debemos seguir estos pasos (Contexto Generalizado)
+
+
+            public class ImagesAdapter extends RecyclerView.Adapter<ImagesAdapter.ViewHolder> {
+                ///...
+                public class ViewHolder extends RecyclerView.ViewHolder {
+                //....
+                }
+                ...
+            }
+
+            Crear Clase que herede de ReclyclerView.Adapter
+                Implementa una clase estática que esta dentro de este, con el mismo nombre <NombreAdaptador.ViewHolder>
+            Se crea la clase ViewHolder y ademas hereda como su clase contenedora, RecyclerView.ViewHolder
+                Se crea el construcotr que necesitamos con la vista asociada a este parámetro con los datos creados como pertinentes (privates)
+                    Todo esto lo vamos a recibir en el constructor eventualmente aquí voy a usar la inyección de dependencias pero
+                    por el momento solo asumo que viene en el constructor
+            Creamos la interfaz para el manejo del click OnItemClickListener que recibirá nuestro Objeto a ser pasado durante el click del tweet
+
+            Creo la forma en la que quiero guardar mis elementos (Arrays, Dataset,HashMaps, etc)
+            En este caso he usado también un imageLoader por loque me ayudará Glide pero puede usar otra librería para imagenes, como Picasso entre otras
+
+
+            Dentro de los métodos
+                onCreateViewHolder
+                    hacer un "View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.content_images" y le mando "parent" y luego falso
+                    lo que va devolver es un "New ViewHolder(view)" en base a este "view"
+
+                    el cual me ayudará a inflar mi vista dentro de el cardView, pero en este podemos optar por poner la actividad(xml) o un fragment(xml)
+
+                    @Override
+                    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.content_images, parent, false);
+                        return new ViewHolder(view);
+                    }
+
+                getItemCount
+                    defino mi "dataset.size"
+
+                       @Override
+                        public int getItemCount() {
+                            return dataset.size();
+                        }
+                Dentro de ViewHolder Class
+
+
+                                    //inyecciones de atributos del contenedor en este caso el CardView, puede ser Fragment(xml), u actividad(xml)
+                                    private View view;
+
+                                    public ViewHolder(View itemView) {
+                                        super(itemView);
+                                        ButterKnife.bind(this,itemView);
+                                        this.view=itemView;
+                                    }
+
+                                    public void setOnclickListener(final Image image, final OnItemClickListener listener){
+                                        view.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                listener.onItemClick(image);
+                                            }
+                                        });
+                                    }
+
+                Aquí vamos a definir un "View" y lo vamos asignar dentro del constructor
+                    vamos hacer también un "ButterKnife.bind(this,itemView)"
+
+                Aquí voy a necesitar un método sea "public void setOnClickListener"
+                que va recibir la imagen actual y el "onClickListener" y lo que voy hacer es colocarle aquí a "View.setOnClickListener(new View.OnClickListener)"
+                aquí digo "Listener.onItemClick" le envió la imagen, listo me hace falta que
+                especificar mi contenido que tengo en el "ViewHolder" tengo dos elementos el la imagen y el "TextView"
+
+
+
+    Ahora me hace falta implementar un método  para cuando reciba los "items" vamos a poner aquí un "private void setItems(List)" que
+    va recibir un listado "items" lo que voy hacer es a lo que ya tengo le voy a agregar estos
+    nuevos "items" y voy a notificar de un "DataSetChanged"
+
+                public void setItems(List<Image> newItems) {
+                        dataset.addAll(newItems);
+                        notifyDataSetChanged();
+                    }
+
+
+
+    Luego un "onBindViewHolder" recordemos que este funciona como conector con la vista
+    a traer "imageTweet" a partir de "dataset.get(position)" y luego voy a colocarle los valores entonces
+    necesito colocarle el "Listener" necesito colocar el texto "imageTweet" seria ".getTweetText"
+    necesito un "imagenloader.load()" le tengo que
+    enviar un "imageView" en este caso es "holder.imgMedia," y le tengo que enviar un "URL" que está en
+    "imageTweet.getImageURL"
+
+            Image tweet = dataset.get(position);
+            holder.setOnclickListener(tweet, clickListener);
+            holder.txtTweet.setText(tweet.getTweetText());
+            imageLoader.load(holder.imgMedia, tweet.getImageURL());
 
 
 

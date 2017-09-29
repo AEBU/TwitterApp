@@ -1,4 +1,4 @@
-package ec.edu.lexus.twitterapp.images;
+package ec.edu.lexus.twitterapp.images.ui;
 
 import java.util.List;
 

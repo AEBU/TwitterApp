@@ -17,7 +17,7 @@ import butterknife.ButterKnife;
 import ec.edu.lexus.twitterapp.LoginActivity;
 import ec.edu.lexus.twitterapp.R;
 import ec.edu.lexus.twitterapp.hashtags.HashtagsFragment;
-import ec.edu.lexus.twitterapp.images.ImagesFragment;
+import ec.edu.lexus.twitterapp.images.ui.ImagesFragment;
 import ec.edu.lexus.twitterapp.main.ui.adapters.MainSectionsPagerAdapter;
 
 public class MainActivity extends AppCompatActivity {
