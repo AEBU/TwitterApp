@@ -702,7 +702,7 @@ En activity_main.xml
 
     tomemetos en cuenta que cuando creamos un Framelayout debemos quitra la orientación (Vertical-Horizontal)
 
-Commit7
+Commit7 :LayoutImplementation
 
     Vamos a agregar un menú para el cierre de sesión,
     Primero editamos el "Layout" para esto creamos un nuevo directorio y a este le llamamos menú y bajo este menú,
@@ -769,3 +769,112 @@ Commit7
             abro el cliente otra vez, le doy cerrar sesión me lleva "LoginActivity" le doy "Back" y tampoco
             me regresa al contenido principal,
 
+
+Commit8:CreateViewPagerFunctionality
+
+    En este apartado vamos a definir como trabajar con un ViewPager, definiendo los posibles Fragments y su respectiva funcionalidad
+
+    Adaptador para Tabs
+
+    Vamos a empezar con los tabs haciendo un adaptador, este adaptador nos va a permitir manejar el
+    contenido, se puede manejar cuando no son fragmentos, sin embargo es común que las
+    secciones, sean fragmentos. vamos hacer un "MainSectionsPagerAdapter" Class y este va heredar
+    de "FragmentPagerAdapter" por lo tanto necesito que me cargue algunos métodos
+
+
+    public class MainSectionsPagerAdapter extends FragmentPagerAdapter {
+
+        private String[] titles;
+        private Fragment[] fragments;
+
+        public MainSectionsPagerAdapter(FragmentManager fm, String[] titles, Fragment[] fragments) {
+            super(fm);
+            this.titles = titles;
+            this.fragments = fragments;
+        }
+
+        ...
+        //
+        @Override
+        public Fragment getItem(int position) {
+            return fragments[position];
+        }
+
+        @Override
+        public int getCount() {
+            return this.fragments.length;
+        }
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return titles[position];
+        }
+    }
+
+
+    y lo que voy a tener es una serie de fragmentos un arreglo de fragmentos y además voy a tener un arreglo
+    de títulos para ponerle nombres a lo necesario, esto lo voy a recibir en el constructor y
+    antes de eso vamos a devolver el "getCount" "return this.fragments.length" ambos debería
+    coincidir en tamaño y para el "items" pueda devolver "this.fragments.position" vamos agregar
+    un constructor para que sirva a ambos, tiene un "fragmentManager" asignamos y listo, con
+    esto está nuestro adaptador ahora podemos ir a "MainActivity" y ver la implementación
+    necesaria aquí,
+
+    En Main Activity
+
+    Vamos al método "onCreate" aquí vamos a agregar un "setupAdapter" método dentro del onCreate creamos
+    el método entonces aquí hacemos una instancia de  "MainSectionsPagerAdapter" "Adapter" enviándole como fragmentManager
+    el "getSupportFragmentManager" pero además tengo que enviarle los fragmentos
+    le hacemos un "new Fragment Arrays" y aquí voy a enviar los dos fragmentos que uso para mostrar en los tabs
+    Luego hacemos un "String titles" "new String" y aquí voy a obtener "R.String.main_header_images"
+    y "R.string.main_header_hashtags" que son los items definidos para los títulos de Las Pages,
+
+
+     @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            ...
+            setupAdapter();
+            //
+        }
+
+        private void setupAdapter() {
+            Fragment[] fragments=new Fragment[]{new ImagesFragment(),new HashtagsFragment()};
+            String[] titles= new String[]{getString(R.string.main_header_images),getString(R.string.main_header_hashtags)};
+
+            MainSectionsPagerAdapter adapter=
+                                    new MainSectionsPagerAdapter(getSupportFragmentManager(),
+                                                                    titles,fragments);
+            viewPager.setAdapter(adapter);
+            tabs.setupWithViewPager(viewPager);
+    }
+
+    Debemos llamar de una maera que podamos conocer a un objeto por ejemeplo al viewPager llamamos "viewpager" para que nos quede claro, va ser también
+    un contenedor pero llamémosle "viewPaper.setAdapter(adapter)" y luego con esto tenemos el "viewPager" listo,
+    pero todavía no hay tabs,
+     y creo un "tabs.setupWithViewPager(ViewPager)"y le envió en "viewPaper" y todo está listo,
+
+
+    Packages
+    Creo las respectivas carpetas para mis hashtags e Imagenes
+
+    images
+        ImagesFragment
+        ...
+    hashtags
+        ...
+        HashtagsFragments
+
+    Instanciamos "newImagesFragment" en nuestro setupAdapter() y de una vez hagamos
+    el otro "new HashtagFragment"
+
+
+    EN adapter  MainSectionsPagerAdapter.class
+
+    El título todavía no lo tengo y ahora debo colocarlo, minimizamos esto por aquí, entonces
+    vamos a volver a nuestro adaptador y vamos a sobrecargar "getPageTitle(position)" de
+    cierta posición y lo que vamos a devolver aquí es "this.titles(position)" ejecutamos
+    de nuevo está esperando ver el título en cada uno de los tabs la selectividad
+
+            @Override
+            public CharSequence getPageTitle(int position) {
+                return titles[position];
+            }

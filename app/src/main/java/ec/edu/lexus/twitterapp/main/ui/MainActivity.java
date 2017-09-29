@@ -3,22 +3,22 @@ package ec.edu.lexus.twitterapp.main.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
 
 import com.twitter.sdk.android.core.TwitterCore;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 import ec.edu.lexus.twitterapp.LoginActivity;
 import ec.edu.lexus.twitterapp.R;
+import ec.edu.lexus.twitterapp.hashtags.HashtagsFragment;
+import ec.edu.lexus.twitterapp.images.ImagesFragment;
+import ec.edu.lexus.twitterapp.main.ui.adapters.MainSectionsPagerAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.tabs)
     TabLayout tabs;
     @BindView(R.id.container)
-    ViewPager container;
+    ViewPager viewPager;
 
 
     @Override
@@ -35,8 +35,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-//        toolbar=(Toolbar)findViewById(R.id.toolbar);
+        setupAdapter();
         setSupportActionBar(toolbar);
+    }
+
+    private void setupAdapter() {
+        Fragment[] fragments=new Fragment[]{new ImagesFragment(),new HashtagsFragment()};
+        String[] titles= new String[]{getString(R.string.main_header_images),getString(R.string.main_header_hashtags)};
+
+        MainSectionsPagerAdapter adapter=
+                                new MainSectionsPagerAdapter(getSupportFragmentManager(),
+                                                                titles,fragments);
+
+        viewPager.setAdapter(adapter);
+        tabs.setupWithViewPager(viewPager);
     }
 
     @Override
