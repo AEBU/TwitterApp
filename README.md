@@ -1353,3 +1353,163 @@ Commit13 :PresenterEInteractorImages
         }
 
 
+
+Commit14 :ImagesIndexWithOutLinks
+
+        Vamos a trabajar en nuestro Repositorio, "RepositoryImpl"
+            Vamos a necesitar un "EventBus" para comunicar los mensajes me interesa la clase que yo implemente
+            También necesito un  "CustomTwitterApiClient"
+
+            Ambos los vamos a recibir en el constructor eventualmente
+        pues voy a publicar algún evento cuando hay un error o no
+
+                private EventBus eventBus;
+                private CustomTwitterApiClient client;
+
+                public ImagesRepositoryImpl(EventBus eventBus, CustomTwitterApiClient client) {
+                    this.eventBus = eventBus;
+                    this.client = client;
+                }
+
+        Usualmente me apoyo en métodos auxiliares solo "post" y uno va recibir un error de hecho hagamos que reciba "List items, String error"
+        Entonces aquí vamos a instanciar un "ImagesEvent event = new ImagenEvent" y asignarle los valores "event.setError(error)"
+        "event.setImages(items)" "eventBus.post(event)"
+
+
+
+        Para que sea más fácil, vamos a crear un
+        método auxiliar que únicamente recibe el error entonces llama a este método previamente
+        definido enviándole "null" en el primer parámetro
+                private void postError(String error) {
+                    postEvent(null,error);
+                }
+
+        Otro que únicamente recibe el listado de
+        "items" y este envía los "items" y "null" en el caso de error,
+
+                private void postImages(List<Image> items) {
+                    postEvent(items,null);
+                }
+
+        Con esto podemos definir nuestro método que publicará el evento
+
+            private void postEvent(List<Image> items,String error){
+                ImagesEvent event = new ImagesEvent();
+                event.setImages(items);
+                eventBus.post(event);
+            }
+
+        listo puedo ahora implementar
+        "get Image" para esto vamos a definir una constante de cuantos Tweets voy ir a traer
+        inicialmente la voy a definir en 100
+
+                private final static int TWEET_COUNT = 100;
+
+        Vamos hacer un método de ayuda "private boolean  containsImages" y recibe un "Tweet tweet" entonces con este método voy a devolver un
+        booleano validando si acaso el tweet tiene imágenes, entonces para eso revisamos si
+        acaso contiene "entities" además estos "entities" tienen "media" y es diferente de "null" para decir que contiene y además "tweet.entities.media"
+        podría estar vacío, yo no quiero que este vacío, entonces si todo esto se cumple, entonces
+        el tweet contiene imágenes, y las puedo ir a traer, de lo contrario no me va interesar
+
+                private boolean containsImages(Tweet tweet) {
+                    return  tweet.entities != null && //tiene entities
+                            tweet.entities.media != null && //estos entities tienen media(fotos)
+                            !tweet.entities.media.isEmpty();//y estos media no son vacías
+                }
+
+
+        En el método getImages del contrato de Repository,
+
+        Vamos hacer un "Callback" de "list callback = new Callback"
+        entonces tengo que importar la clase para que me de sugerencias, entonces lo importamos
+        y necesito un "callback" de una lita de Tweets  implemento los métodos que son dos, "success"
+        y "failure" y en la parte de abajo voy a decir "Client.getTimeLineService" y le envío los
+        parámetros que tengo voy a tener el "TWEET_COUNT, true, true, true, " "true" más y "callback"
+        este método es definido por retrofit como le mandamos llamando a "getTimeLineService().homeTimeLine()"
+
+                public void getImages() {
+                    Callback<List<Tweet>> callback=new Callback<List<Tweet>>() {
+                        @Override
+                        public void success(Result<List<Tweet>> result) {
+                           //...
+                        }
+
+                        @Override
+                        public void failure(TwitterException exception) {
+                           //...
+                        }
+                    };
+
+                    client.getTimeLineService().homeTimeline(TWEET_COUNT,true,true,true,true,callback);
+                }
+
+
+        Implemento el método "success" y "failure" veamos si todo falla entonces es fácil porque a un "post" le envío "e.getLocalizerMessage"
+
+                failure
+                        postError(exception.getLocalizedMessage());
+
+        Nada mas ahora si tengo éxito entonces voy a tener una respuesta y esta respuesta va
+        incluir un listado de "tweets",lo que voy hacer es crear
+        un listado de imágenes le llamo a este "items" este listado va estar vacío inicialmente y voy a revisar
+        todo lo que recibimos le digo "for (Tweet tweet)" que va estar dentro del result.data,
+        recuerden que lo que recibe es un "result" que contienen un "list" de "tweets" entonces
+        vamos a ir revisando "if (containsImages(tweet))" si el elemento actual contiene imágenes vamos
+        a hacer algo de lo contrario no
+
+        Aquí instanciamos un modelo con la imagen entonces vamos ir
+            colocando los valores "tweetModel.setId" le hacemos con "tweet.idStr"
+            luego "tweetModel.setfavoriteCount(tweet.favoriteCount)"
+            luego vamos a tomar el texto "tweetText" inicialmente va ser "tweet.text" pero como va traer un link yo no quisiera que eso vaya incluido entonces vamos a decir "int index = tweetText.indexOf("http")"
+        entonces esto lo vamos a quitar si acaso lo incluyo ósea si el índice está incluido
+        entonces "tweetText = tweetText.substring" desde "0" hasta que aparezca ese "index" entonces
+        voy a ignorar el resto, asigno con un "setText" con esta variable
+        y por ultimo necesitamos la foto, entonces voy a tener un "mediaEntity currentPhoto"
+        que va ser "tweet.entities.media.get(0)" puedo tener la primera únicamente, recuerden que
+        en el método "containsImagen" yo ya estoy validando que "tweet.entities" sea diferente
+        de "null" que "tweet.entities.media" sea diferente de "null" de tal forma que pueda hacer esta
+        llamada sin preocuparme por la validación, entonces vamos a ir a traer el "imageUrl = currentPhoto.get.mediaUrl"
+        y lo agregamos "tweetModel.setImagenURL" con esta variable por ultimo ya que todo está
+        listo entonces lo agregamos "items.add" con esto tengo listo todo los elementos que fui
+        a traer
+            success Method
+
+                        List<Image> items=new ArrayList<>();
+                        for (Tweet tweet:result.data){
+                            if (containsImages(tweet)){
+                                Image tweetModel = new Image();
+                                tweetModel.setId(tweet.idStr);
+                                tweetModel.setFavoriteCount(tweet.favoriteCount);
+
+                                //esta parte lo podemos omitar, pero va si queremos quitar los enlaces dentro del texto
+                                String tweetText=tweet.text;//asignamos el texto
+                                int index=tweetText.indexOf("http");//veo si hay un valor de retorno para mi índice
+                                if (index>0){//si acaso hay el índice entonces quito todo desde la priemra posición hasta que aparezca ese índice
+                                    tweetText=tweetText.substring(0,index);
+                                }
+                                tweetModel.setTweetText(tweetText);
+
+                                //este es para la foto, la piermoa únicamente(0), porque ya esta validado que tweetentites no este vacía
+                                MediaEntity currentPhoto = tweet.entities.media.get(0);
+                                String imageURL = currentPhoto.mediaUrl;
+                                tweetModel.setImageURL(imageURL);
+                                items.add(tweetModel);
+
+                            }
+
+        Sin embargo eso no quiere decir que estén ordenados, entonces ahora voy a proceder a ordenarlos lo voy a ordenar
+        en base a la cantidad de favoritos "Collections.sort()" quiero ordenar unos "items" con un comparador
+        de imágenes entonces lo que vamos a devolver aquí es
+        que "t1.getFavoriteCount -image.getFavoriteCount" con eso realizamos la comparación del orden
+        y estamos listos para publicar el evento, vamos a publicarlo únicamente si tiene algo
+        de hecho vamos a publicarlo siempre porque es un listado que no va ser nulo, entonces
+        le puedo decir "post(items)"
+        Cabe recalcar que en este apartado puedo definir a mi Image(CustonEntity), como una clase que hereda de Comparator, y con este sobrecargar el método compareTo, y con eso ya tenemos definido nuestro comparador
+
+
+                        Collections.sort(items, new Comparator<Image>() {
+                        public int compare(Image t1, Image t2) {
+                                    return t2.getFavoriteCount() - t1.getFavoriteCount();
+                                }
+                            });
+                        postImages(items);
