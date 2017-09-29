@@ -878,3 +878,53 @@ Commit8:CreateViewPagerFunctionality
             public CharSequence getPageTitle(int position) {
                 return titles[position];
             }
+
+
+Commit9 :LayoutImagesFragment
+    Layout General con un cardView
+
+    Teníamos ya listo nuestro "Layout" general en donde especificamos que iba ver un "RecyclerView"
+    en el caso de las imágenes pues va ser una vista de "Grilla" con dos columnas pero dentro
+    de cada uno de los elementos aún tengo que especificar este "Layout", de nuevo aquí en
+    imágenes voy a tener un "ImagesView" y un "TextView" con eso voy a mostrar el contenido
+    necesario
+    Vamos a usar un "cardView" que la idea de esto es que se pueda mostrar en múltiples
+    dispositivos con una misma identidad gráfica, si por ejemplo yo quisiera hacer esto para
+    "web" o para televisión o para auto, entonces la idea de "CardView" es que mantenga esa
+    identidad a lo largo de todos los dispositivos
+
+
+    Vamos entonces a hacerlo a "AndroidStudio"
+    que vamos a crear un "Layout" nuevo y a este lo llamamos "content_images.xml" el "Root Element" le hacemos un "Relative Layout"
+    Reemplazamos todo por un "CardView", dentro de "CardView" tengo un "RelativeLayout" y adentro
+    un "ImageView" y un "TextView" Teniendo un archivo de este tipo
+
+    <android.support.v7.widget.CardView
+        ...
+        >
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/imgMedia"
+                android:layout_margin="@dimen/activity_horizontal_margin"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/activity_horizontal_margin"
+                android:id="@+id/txtTweet"
+                android:layout_below="@+id/imgMedia"
+                android:layout_centerHorizontal="true" />
+        </RelativeLayout>
+    </android.support.v7.widget.CardView>
+
+
+
