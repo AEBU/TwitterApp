@@ -1123,5 +1123,92 @@ Commit11 :ImagesAdapter
             holder.txtTweet.setText(tweet.getTweetText());
             imageLoader.load(holder.imgMedia, tweet.getImageURL());
 
+Commit12
+
+    Fragment y View
+        (ImagesFragment)
+    Vamos a trabajar con el fragmento "ImagesFragment" este fragmento tiene que implementar a "ImagesView" y "onItemClickListener"
+    para el adaptador ambos implican que necesitamos métodos adicionales con "CreateView" actualmente
+    solo esta renderizando mostrando una vista,
+            public class ImagesFragment extends Fragment implements ImagesView, OnItemClickListener {
+
+    Para usar una vista necesaria y poderla usar dentro de nuestra Butterknife1 por lo que
+    vamos hacer un "View view =Inflater. Inflater(R.layout.content_images, container, false)" y sobre esta vista vamos hacer un "void ButterKnife"
+
+            @Override
+            public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                     Bundle savedInstanceState) {
+                View view = inflater.inflate(R.layout.fragment_content, container, false);
+                ButterKnife.bind(this, view);
+                return view;
+            }
+    Aquí uso un "Progressbar" y un "RecyclerView", que los defino como Butterknife.
+
+
+
+    Tengo que implementar muchos métodos que quedaron esperando para que lo haga,
+    Voy a necesitar un presentador, entonces definimos aquí un "ImagesPresenter" vamos a eventualmente
+    a inyectar necesito aquí un "images adapter" también vamos a inyectarlo pero en base a
+    esto voy a trabajar,
+
+                ImagesPresenter presenter;
+                ImagesAdapter adapter;
+
+    Vamos primero con varios métodos del presentador, como acotación importante en este apartado podemos observar que onDestroy y onPause son llamados antes de la llamada a su ancestro
+
+                @Override
+                public void onResume() {
+                    super.onResume();
+                    presenter.onResume();
+                }
+
+                @Override
+                public void onPause() {
+                    presenter.onPause();
+                    super.onPause();
+                }
+
+                @Override
+                public void onDestroy() {
+                    presenter.onDestroy();
+                    super.onDestroy();
+                }
+
+
+    Listo me tocaría ver "ShowElements" "hideElements"
+    entonces vamos a cambiar la visibilidad del "RecyclerView" aquí "recyclerView.setVisibility(View.VISIBLE)"
+    o "View.GONE" aquí vamos hacer lo de "ProgressBar" "progressBar.setVisibility(View.VISIBLE)"
+    "GONE", este "ShowElement"  también se lo puede llamar como "showImages"
+
+    Tengo el método "setItems" dentro del adaptador y lo puedo llamar desde aquí (ImagesFragment), "adapter.setItems(items)"
+
+        @Override
+        public void setContent(List<Image> items) {
+            adapter.setItems(items);
+        }
+
+    Cuando hay un error nos va hacer un "Snackbar.make" la vista que voy a usar es el contenedor,tomemos en cuenta que acá podemos usar el nombre del contenedor que engloba todo, (Framelayout,LinearLayout,RelativeLayout, ...)
+    Llamamos al "container" y ahora ya lo puedo usar en el "SnackBar" "container, " el error
+    que quiero mostrar en este caso lo voy a enviar tal cual, luego la duración es duración
+    corta y lo muestro con "show"
+
+        @Override
+        public void onError(String error) {
+            Snackbar.make(container,error,Snackbar.LENGTH_SHORT).show();
+        }
+
+    Nos falta manejar el método del Click del "items" aquí lo que vamos hacer es obtener el "URL" entonces vamos hacer un "Intent intent = new intent " y le vamos a enviar "Intent.ACTION_VIEW, Url.parse" y lo que le envío aquí es la
+    imagen "image.getTweetUrl" entonces empezamos una actividad nueva a partir de este
+
+        @Override
+        public void onItemClick(Image tweet) {
+            Intent i=new Intent(Intent.ACTION_VIEW, Uri.parse(tweet.getTweetURL()));
+            startActivity(i);
+        }
+
+    Ahora me hace falta implementar el resto de mi "stack" es decir el presentador y el interacturador
+    dentro del repositorio previo a probarlo ,en este caso como vamos hacer la inyección entonces
+    voy a implementar todo esto que no son métodos muy largos y luego voy a implementar la inyección
+    y luego lo voy a probar.
 
 
