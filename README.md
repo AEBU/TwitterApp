@@ -928,3 +928,53 @@ Commit9 :LayoutImagesFragment
 
 
 
+Commit10
+    Arquitectura MVP, vamos a definir nuestra Arquitectura MVP para usarla dentro de Images
+
+    Definimos primero todas las interfaces que definien abstracciones
+
+        ImagesView
+            //Mostrar, ocultar elementos
+                void showElements();
+                void hideElements();
+            //Mostrar, ocultar progressBar,
+                void showProgress();
+                void hideProgress();
+            //Cuando haya un resultado podemos tener un error
+                void onError(String error);
+            //podemos hacer un setContent con un listado de Imáganes
+                void setContent(List<Image> items);
+
+                Creamos Entidad de Image
+                    //para mas adelante usarla cuando usemos el adaptador
+
+        ImagesPresenter
+            Va a tener algunos metodos de EventBus Comunes
+                void onResume();
+                void onPause();
+                //para evitar el Memory lick, destruyendo la vista
+                void onDestroy();
+                //para traer el contenido desde la api
+                void getImageTweets();
+                //Creamos el IMagesEvent que son los eventos de Images y lo usamos cuando veamos el presentador
+                void onEventMainThread(ImagesEvent event);
+
+
+        ImagesInteractor
+            Va a conectar
+                //método que permite ir a traer el contenido
+                void execute();
+
+
+        ImagesRepository
+            Voy a tener un método que llama
+            void getImages();
+
+
+    Con esto tenemos definido los contratos que van a implementar las clases, las clases concretas, la que tienen los detalles de implementación
+    se van a basar en estas abstracciones para presentarme los resultados de este Feature que va a traer imágenes
+
+
+
+
+
