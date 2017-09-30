@@ -1696,3 +1696,185 @@ Commit15 :IDFragmentImages
                     return  TwitterCore.getInstance().getSessionManager().getActiveSession();
                 }
 
+
+Commit16
+            :SetupInjection_Fragment_prueba
+
+        Listo tengo mi inyección de dependencias implementada con quien está proveyendo las
+        dependencias ahora me corresponde
+
+        Me dirijo al "target", "ImagesFragment" que es donde lo voy a usar lo que vamos hacer aquí
+
+        En onCreateView
+            después del "bind()" hacemos un setupInjection "setupInjection"
+
+        Vamos a decirle a este fragmento que use el inyecto de dependencias con las dependencias que acabamos de escribir, para usarlo debería
+        de compilar vamos a darle "make" la idea es que "dagger" cuando se compila va generar
+        ciertos objetos que me van a servir aquí en la inyección
+        y esto lo puedo hacer de varias formas
+            Puedo tener componente de forma explícita aquí en el fragmento
+
+
+            En aplicación que implementa la inyección
+
+                ...
+                    private void setupInjection() {
+                        DaggerImagesComponent
+                                .builder()
+                                .libsModule(new LibsModule(this))
+                                .imagesModule(new ImagesModule(this, this))
+                                .build()
+                                .inject(this);
+                    }
+                ...
+
+
+
+        En TwitterClientApp, Clase aplicación
+
+                public ImagesComponent getImagesComponent(Fragment fragment, ImagesView view, OnItemClickListener listener){
+                    return DaggerImagesComponent
+                            .builder()
+                            .libsModule(new LibsModule(fragment))
+                            .imagesModule(new ImagesModule(view, listener))
+                            .build();
+                }
+
+
+        En fragmentAplication, clase que implementa la inyección
+
+                private void setupInject() {
+                    TwitterClientApp app=(TwitterClientApp)getActivity().getApplication();
+                    ImagesComponent imagesComponent=app.getImagesComponent(this,this,this);
+            //        presenter=imagesComponent.getPresenter();
+                    imagesComponent.inject(this);
+
+                }
+
+
+        EXPLICACIÓN DE LOS DOS MÉTODOS
+
+
+            Lo puedo   hacer en mi "aplication class" en este caso vamos hacerlo en el "aplication class" y vamos
+            a decirlo aquí "public ImagesComponent getImagesComponent" y aquí vamos a regresar un "DaggerImagesComponent.builder"
+            y le tengo que especificar los parámetros que va tener
+                Vamos a decirle que va usar un "LibsModule" vamos hacer aquí mismo un "getLibsModule" "getLibsModule" recuerden que recibe un fragmento entonces tengo que especificarle el fragmento esta clase está definida en LibsModule de Inyección
+                Luego vamos hacer un ".imagesModule(new ImagesModule(Espera recibir))" esperar recibir también algo
+                Y luego le ponemos "build" y eso va devolver el componente
+
+            Ahora para poder construir el "LibsModule"
+                necesito un fragmento
+                necesito un "imagesView" para el "imagesModule"
+                necesito un "OnItemClickListener"  también para el imagesModule
+
+            Entonces al "LibsModule" le voy a enviar el fragmento
+            y a "ImagesModule" le voy a enviar el "view" y el "ClickListener"
+
+            Como es un módulo puedo instanciar simplemente "new LibsModule(Fragment)"
+
+
+       "Tomemos en cuenta qeu solo para el segundo Método"
+       En Clase ImagesFragment
+
+
+        Ahora regreso al fragmento y aquí en el "setupInjection" aquí vamos
+        a declarar un "TwitterClientApp" a partir de "getActivity().getApplication()" de hecho
+        ya que tengo esto voy a definir un componente voy a definir el "ImagesComponent" y vamos a decir "app.getImagesComponent"
+        le tengo que enviar los parámetros el fragmento, la vista y el "listener"
+            En este caso es "this" tres veces   porque tengo una clase que es un fragmento que implementa las otras dos interfaces y
+
+        Luego realizo la inyección aquí: es donde nosotros definimos dos métodos que hacían lo mismo en "ImagesComponent" que dependiendo de cómo
+        este definido el componente puedo hacer una llamada "inject" o puedo hacer un "getPresenter"
+        entonces por ejemplo podría ser "imagesComponent.getPresenter" y así asignar a los objetos que estoy obteniendo,
+        solamente los objetos principales no todo la cascada de objetos sino me interesan particularmente
+        dos , me interesa el adaptador y presentador entonces podría decir por ejemplo "presenter = imagesComponent.getPresenter" tendré que
+        hacer otra llamada y agregar otro método para el adaptador, en vez de eso lo voy a
+        dejar comentado y lo que voy hacer es "imagesComponent.inject()" y le envío el fragmento "this"
+
+        Y a estos dos campos los voy a decorar con "@Inject" de tal forma que cuando mande a llamar este
+        método esta anotación lo que va provocar que estos cambios se inyecten
+
+                    @Inject
+                    ImagesPresenter presenter;
+                    @Inject
+                    ImagesAdapter adapter;
+
+        Nos hace falta llamar en
+
+            onCreateView
+                "presentar.getImageTweets"
+                "setupRecyclerView"
+
+            En setupRecyclerView
+            le asignamos los valores adecuados al "RecyclerView", "RecyclerView.setLayoutManager" y hacemos un "new GridLayoutManager(getActivity, 2)"
+            para que tenga dos columnas y luego "recyclerView.setAdapter adapter"
+
+                    private void setupRecyclerView() {
+                        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
+                        recyclerView.setAdapter(adapter);
+                    }
+
+
+        Algo muy importante esto debe ser     llamado después de la inyección para que esté listo todo lo que la inyección está
+        proveyendo en este caso es el "presentador" y el "adaptador" si no voy a tener un "null", y por lo tanto una Excepción NullPointerException
+        porque todavía no tiene ningún valor asignado estas dos variables, el orden es muy importante
+
+            ....//orden de nuestro onCreateView para evitar el NullPointerException
+                    @Override
+                    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                             Bundle savedInstanceState) {
+                        View view = inflater.inflate(R.layout.fragment_content, container, false);
+                        ButterKnife.bind(this, view);
+                        setupInject();
+                        setupRecyclerView();
+                        presenter.getImageTweets();
+                        return view;
+                    }
+            ...
+
+
+
+    > N0TA: Como ya hemos visto se ha realizado algunas actualizaciones por lo que no esta demás explicarlas
+
+        Adapter_RecyclerView_CardView       Hemos visto que dentro del adaptador usamos un CardView, con esto solo mandamos a inflar el layout.xml del cardView, mas no del fragment
+        Layouts                             No hemos tenido en cuenta que no necesitamos un fragment, específico de cada Fragment, ya que estamos inflando otros como contenedores
+        Fabric                              ya no es necesario, por lo que usamos Twitter kit
+        Retrofit                            usamos Retrofit 2.0, porl o que las llamadas se hacen de otra forma quitando los callbacks y las llamadas como asíncronas, ya que este cambia a un solo patrón de diseño
+
+
+            Antes
+                @GET("/1.1/statuses/home_timeline.json")
+                void homeTimeline(@Query("count") Integer count,
+                                  @Query("trim_user") Boolean trim_user,
+                                  @Query("exclude_replies") Boolean exclude_replies,
+                                  @Query("contributor_details") Boolean contributor_details,
+                                  @Query("include_entities") Boolean include_entities,
+                                  Callback<List<Tweet>> callback);
+
+            Después
+                @GET("/1.1/statuses/home_timeline.json")
+                Call<List<Tweet>> homeTimeline (@Query("count") Integer count,
+                                                @Query("trim_user") Boolean trim_user,
+                                                @Query("exclude_replies") Boolean exclude_replies,
+                                                @Query("contributor_details") Boolean contributor_details,
+                                                @Query("include_entities") Boolean include_entities
+                                                );
+
+        Para la llamada dentro de nuestro client, ImagesRepositoryImpl, que es le método que usa nuestra lógica y la que se comunica con el Modelo cambiamos
+
+            Antes
+                    //el Callback que teníamos definido es uno que me traía de una Solicitud Rest a la API de TWITTER
+                    client.getTimelineService().homeTimeline(TWEET_COUNT, true, true, true, true,callback)
+
+
+            Después
+
+                    client.getTimeLineService().homeTimeline(TWEET_COUNT,true,true,true,true).enqueue(callback);
+
+    para mas información de Twitter podemos refererinos acá
+    https://dev.twitter.com/twitterkit/android/upgrading                                                                            Fabric
+        https://dev.twitter.com/twitterkit/android/access-rest-api
+        https://stackoverflow.com/questions/44966286/java-lang-runtimeexception-no-retrofit-annotation-found-parameter-3            Retrofit
+
+
+

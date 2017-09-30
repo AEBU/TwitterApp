@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +16,15 @@ import android.widget.ProgressBar;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import ec.edu.lexus.twitterapp.R;
+import ec.edu.lexus.twitterapp.TwitterClientApp;
 import ec.edu.lexus.twitterapp.entities.Image;
 import ec.edu.lexus.twitterapp.images.ImagesPresenter;
+import ec.edu.lexus.twitterapp.images.di.ImagesComponent;
 import ec.edu.lexus.twitterapp.images.ui.adapters.ImagesAdapter;
 import ec.edu.lexus.twitterapp.images.ui.adapters.OnItemClickListener;
 
@@ -36,7 +41,9 @@ public class ImagesFragment extends Fragment implements ImagesView, OnItemClickL
     @BindView(R.id.container)
     FrameLayout container;
 
+    @Inject
     ImagesPresenter presenter;
+    @Inject
     ImagesAdapter adapter;
     public ImagesFragment() {
     }
@@ -47,7 +54,23 @@ public class ImagesFragment extends Fragment implements ImagesView, OnItemClickL
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_content, container, false);
         ButterKnife.bind(this, view);
+        setupInject();
+        setupRecyclerView();
+        presenter.getImageTweets();
         return view;
+    }
+
+    private void setupRecyclerView() {
+        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void setupInject() {
+        TwitterClientApp app=(TwitterClientApp)getActivity().getApplication();
+        ImagesComponent imagesComponent=app.getImagesComponent(this,this,this);
+//        presenter=imagesComponent.getPresenter();
+        imagesComponent.inject(this);
+
     }
 
     @Override

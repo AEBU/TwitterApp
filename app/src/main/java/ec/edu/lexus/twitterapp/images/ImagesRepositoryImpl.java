@@ -16,8 +16,6 @@ import ec.edu.lexus.twitterapp.entities.Image;
 import ec.edu.lexus.twitterapp.images.events.ImagesEvent;
 import ec.edu.lexus.twitterapp.lib.base.EventBus;
 
-import static android.R.attr.fillAfter;
-import static android.R.attr.version;
 
 /**
  * Created by Alexis on 28/09/2017.
@@ -79,7 +77,7 @@ public class ImagesRepositoryImpl implements ImagesRepository {
             }
         };
 
-        client.getTimeLineService().homeTimeline(TWEET_COUNT,true,true,true,true,callback);
+        client.getTimeLineService().homeTimeline(TWEET_COUNT,true,true,true,true).enqueue(callback);
     }
 
 

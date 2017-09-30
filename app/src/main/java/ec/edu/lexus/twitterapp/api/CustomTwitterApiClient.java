@@ -6,6 +6,9 @@ import com.twitter.sdk.android.core.TwitterSession;
 /**
  * Acceso a el API de Twitter, para mas entendimiento a través de la interfaz voy a exponer cuál es la forma
  * de acceder a este API (TimeLIneService), y a través del Cliente voy a poder obtener esta Interfaz (CustomTwitterApiClient)
+ * en este caso debemos consumir el api Rest de Twitter mediante esta documentación https://dev.twitter.com/twitterkit/android/access-rest-api
+ *
+ *
  * Created by Alexis on 26/09/2017.
  */
 
