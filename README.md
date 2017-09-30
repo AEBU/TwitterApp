@@ -1513,3 +1513,186 @@ Commit14 :ImagesIndexWithOutLinks
                                 }
                             });
                         postImages(items);
+
+
+Commit15 :IDFragmentImages
+
+        Inyección de Dependencias
+
+
+        Vamos ahora implementar la inyección de dependencias creando un nuevo paquete llamado "di" dentro de "images" package
+            images
+               di
+                ...
+
+        Necesitamos algo muy parecido al caso anterior cuando usamos librerías como inyecciones
+        necesitamos dos clases, de hecho una clase y una interfaz
+
+            "ImagesModule" que es la clase
+             la interfaz se llama "ImagesComponent"
+
+        Usando la interfaz
+        La interfaz lo que va proveer es una especie de "API"
+        en donde se va usar esta inyección entonces tengo dos formas de manejarlo para empezar
+        vamos a ponerle ciertas anotaciones
+        Es un "Singleton" y va ser uso de unos módulos
+        para definir el componente, entonces aquí voy a definir que módulos voy a estar utilizando
+        voy a utilizar ciertos módulos previamente definidos por mí mismo, por lo menos el que
+        voy a utilizar es "ImagesModule.class" pero además como voy a estar usando
+        ciertas librerías, vamos a poner aquí también "Libs.Module.class"
+
+                @Singleton
+                @Component(modules = {ImagesModule.class,LibsModule.class})
+
+
+        Luego para inyectar, exponer este "API" tengo dos opciones
+            Una opción es llamar al método "inject" ponerle
+            de nombre "inject" y especificar cuál es el "target" por ejemplo "imagesFragment" este
+            es el target donde voy a inyectar
+
+                    void inject(ImagesFragment imagesFragment);
+
+            Una segunda opción sería devolver un objeto por ejemplo
+            "ImagesPresenter" y ponerle algún nombre al método digamos "getPresenter" entonces
+            en el módulo voy a crear los "provides" y este método lo puedo mandar a llamar en base
+            a el componente, en este caso por el momento voy a dejar a ambos
+
+                    ImagesPresenter getPresenter();
+
+
+        Ahora voy a trabajar al Módulo "ImagesModule"
+
+        Recordemos tiene que tener una anotación "module" y luego
+        vamos a ejecutar aquí todos los "provides" que voy a inyectar.
+
+                    @Module
+                    public class ImagesModule {
+                        ...
+                    }
+
+        Voy a inyectar un adaptador y todo el "stack" de la arquitectura
+        el adaptador va usar un "ImageLoader" en algún momento uso un "eventBus" por eso necesito ver las librerías,
+        pero hay ciertas cosas que no puedo inyectar, sino tengo que recibirlas en un constructor, en concreto lo que necesito
+        es la vista y un "onItemCliclListener" básicamente eso sería lo que necesito en el constructor
+
+
+
+                    public ImagesModule(ImagesView view, OnItemClickListener clickListener) {
+                        this.view = view;
+                        this.clickListener = clickListener;
+                    }
+
+        Tenemos que escribir métodos por cada cosa que vamos a proveer
+        entonces vamos a proveer un "ImagesAdapter providesAdapter" entonces este método va
+        a devolver un adaptador
+
+                    @Provides
+                    @Singleton
+                    ImagesAdapter provideAdapter(List<Image> items,ImageLoader imageLoader, OnItemClickListener clickListener) {
+                        return new ImagesAdapter(items,imageLoader, clickListener);
+                    }
+
+
+        necesito volver un "new imagesAdapter"
+        que recibe como parámetros, vamos ir a revisar que no mas necesito dentro de mi ImagesAdapter, "ui" "Adapter" lo que tiene es un listado
+        un "imageLoader" y un "OnItemClickListener" entonces esto lo que voy a recibir y con eso
+        voy a construir mi adaptador, necesito entonces de algún lugar obtener este "dataset" este
+        "imageLoader" y este "clickListener", el "imageLoader" lo está proveyendo la inyección de dependencias
+        de la librería entonces si vamos a ver la carpeta "LibsModule" de "di" tengo un módulo
+        que tiene un "provides imageLoader" entonces como en mi componente estoy especificando
+        que voy a usar el módulo de las librerías lo que va ser "dagger" en tiempo
+        de compilación es permitirme acceder a esto y ya tengo mi "imageLoader" sin embargo no
+        tengo un "dataset" y no tengo un "ClickListener" entonces necesito un método que provea cada uno de estos, entonces
+        vamos hacer un método "provides OnItemClickListener" que no recibe nada y lo que devuelve es el
+        "ClickListener" que recibí en el constructor
+
+                    @Provides
+                    @Singleton
+                    List<Image> provideItemsList() {
+                        return new ArrayList<Image>();
+                    }
+
+                    @Provides
+                    @Singleton
+                    OnItemClickListener provideClickListener() {
+                        return this.clickListener;
+                    }
+
+
+        Algo similar vamos hacer para proveer el listado, vamos a devolver este "List"
+        le ponemos "providesItemList" vamos a ponerle podría ser una inyección con nombre si en
+        algún caso estuviera proveyendo más de un listado y aquí lo que voy a devolver es un
+        "new ArrayList" de "Image" vacío, podemos usar "@Name" para proveer mas de un listado, (dos objetos del mismo tipo pero son diferentes)
+
+
+
+        Con esto acabamos la inyección del adaptador
+
+        Necesito devolver todo lo demás, el objeto que voy a tener dentro de mi "target" que
+        en este caso el "target" es el fragmento además del "adapter" es un "presenter" entonces necesito
+        un "imagesPresenter" "provides ImagesPresenter"
+
+
+        Si voy a ver el presentador vamos a ver el presentador entonces lo que el presentador
+        recibe es un "imagesView" un "eventBus" y un "Interactor" entonces lo colocamos aquí
+        y vamos a devolver un "imagesPresenterImplementation" a partir de estos parámetros el "eventBus"
+        viene de la librería, entonces voy a necesitar escribir un "provides" para "View" y "Interactor"
+
+
+                @Provides
+                @Singleton
+                ImagesPresenter provideImagesPresenter(EventBus eventBus,ImagesView view, ImagesInteractor interactor) {
+                    return new ImagesPresenterImpl(eventBus, view, interactor);
+                }
+                //como  EventBus viene de la librería voy a necesitar un provides para ImageView
+                @Provides
+                @Singleton
+                ImagesView provideImagesView() {
+                    return this.view;
+                }
+
+                @Provides
+                @Singleton
+                ImagesInteractor provideImagesInteractor(ImagesRepository repository) {
+                    return new ImagesInteractorImpl(repository);
+                }
+
+                @Provides
+                @Singleton
+                ImagesRepository provideImagesRepository(EventBus eventBus,CustomTwitterApiClient client) {
+                    return new ImagesRepositoryImpl(eventBus,client);
+                }
+
+        Entonces necesito un  "provides ImagesView" va devolver el "View" que recibió en el constructor y
+        "provides images interactor", "ImagesInteractor" va devolver
+        un "ImagesInteractor" entonces voy a ver mi implementación del Interactuador y lo que
+        recibe es un "ImagesRepository" entonces vamos a corregir aquí los parámetros colocamos
+        el repositorio y listo, estamos devolviendo un repositorio
+
+
+        Ahora de donde sale ese repositorio, entonces tengo que devolver
+        un repositorio con un "provides ImagesRepository" y vamos a ir a ver el repositorio que recibe,
+        el repositorio está recibiendo un "eventBus" y un "Client" entonces vamos a enviarle aquí
+        un "eventBus" que viene de la librería y un "Client" que ya voy a ver de dónde lo
+        puedo obtener entonces vamos a construir un "ImagesRepositoryImplementation" a partir
+        de "eventBus" y de "Client"
+
+                @Provides
+                @Singleton
+                CustomTwitterApiClient providesCustomTwitterApiClient(TwitterSession session){
+                    return new CustomTwitterApiClient(session);
+                }
+
+        Necesito proveer la session de Twitter
+        Vamos a colocar ese parámetro y devolvemos un "new CustomTwitterApiClient"
+        a partir de esa sesión ahora necesito un "provides" para la sesión, entonces vamos
+        a devolver un "session provides TwitterSession" le vamos a poner esta ya no va tener ningún
+        parámetro porque la sesión la puedo tener de "TwitterCore.getInstance.getSessionManager().getActiveSession()"
+        listo si no tengo una sesión activa esto va ser nulo, pero como solo tengo las imágenes
+        detrás de "login" tengo que tener una sesión activa.
+                @Provides
+                @Singleton
+                TwitterSession providesTwitterSession(){
+                    return  TwitterCore.getInstance().getSessionManager().getActiveSession();
+                }
+
