@@ -1878,3 +1878,74 @@ Commit16
 
 
 
+
+Commit17
+
+        :LayoutFragmentHashtags
+
+        Vamos ahora a construir el "Layout" para el manejo de "Hashtags" noten que cada uno de
+        los elementos tiene un texto y abajo los "hashtags" que están mostrados como una especie de listado
+        bajo cada elemento
+        A diferencia a las imágenes en donde tenía dos columnas y en cada elemento
+        un "ImagesView" y un "TextView" ahora con el "HashTags" voy a tener un listado va lineal
+        y dentro de cada uno voy a tener un "TextView" y un "RecyclerView" anidado, para esto tenemos
+        que hacer unos ajustes en código que vamos a ver, pero empezamos con el "Layout"
+
+
+        Vamos a usar una referencia "ContentImages.xml" pero lo voy
+        a llamar ahora "ContentHashtags.xml" y vamos a conservar el "TextView" quitamos el "ImageView"
+        y al "TextView" le vamos a llamar "txtTweet" le dejamos igual le vamos a agregar que tenga
+        cierto tamaño, "Android:textAppearence" y la forma en que lo vamos a manejar es con
+        "android:attr/textAppearanceMedium" para que tenga un tamaño mediado, no necesito un margen
+
+        Además voy a tener un "RecyclerView" este "RecyclerView"
+        el ancho va ser "match_parent" el alto va ser "wrap_content" y va tener un identificador,
+        este identificador va ser "RecyclerView"
+        En conclusión va tener un texto y por debajo del listado, este listado lo vamos a poner, como con columnas,
+        pero lo vamos hacer en código, ósea el elemento de "ui" simplemente poner el render un listado,
+        entonces con esto tenemos listo nuestro "Layout" para trabajar los "hashtags"
+
+
+        En content_hashtags.xml
+             <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:id="@+id/txtTweet"
+                        android:layout_centerHorizontal="true" />
+
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/recyclerViewHashtags"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/txtTweet" />
+
+                </RelativeLayout>
+
+        Me hace falta agregar, que tenga un "Layout" especifico, por cada fila de este
+        "RecyclerView" entonces vamos hacer aquí un nuevo "Layout" que se llame "row_hashtag_text.xml"
+        y aquí vamos agregar un "TextView", vamos a ver el "TextView" que necesito es un "Plain Text View"
+        tenemos de ancho y alto, lo que si le voy a poner es un identificador "txthashtag" y
+        vamos agregar aquí, "TextColor" que color que vamos a usar, es veamos "android:textColor="@android:color/hole_blue_dark"
+        y además vamos a poner un "background" el "background" le vamos a poner, de hecho como
+        está mejor, si este es el "background" y el color entonces vamos a usar "@android:color/white" y le agregamos un pequeño
+        "padding" para que no queden tan pegados a los bordes, con "@dimen/appbar_padding_top"
+        entonces son 8dps queda aquí un poco mejor, esto es lo que vamos a ver en cada uno de
+        los elementos de la fila, ahora estamos listos para pasar a la implementación.
+
+
+
+        En row_hashtag_text.xml
+
+                <TextView
+                    android:padding="@dimen/appbar_padding_top"
+                    android:background="@android:color/holo_blue_dark"
+                    android:textColor="@android:color/white"
+                    android:layout_width="wrap_content"
+                    android:text="@string/app_name"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/txtHashtag" />
