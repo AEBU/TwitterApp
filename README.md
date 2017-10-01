@@ -2076,7 +2076,7 @@ Commit18
                 execute()               repository.getHashtags      //para traer los hashtags que necesito desde el repositorio
 
         9.- "class HashtagsRepositoryImpl" aquí vamos a hacer las llamadas a la API de twitter, con esto logramos un código desacoplado de cada librería y mucho mas escalable
-            ...LO DEJAMOS PARA EL OTRO VIDEO
+            ...nos movemos hacia el "commit 20"
 
 
 
@@ -2400,7 +2400,79 @@ Commit19
                     holder.setItems(tweet.getHashtags());
                 }
 
+Commit20
+            :RepositoryImplHashtags
+        Continuamos haciendo nuestro repositorio de los HashtagsRespositoryImpl
+        En este apartado pues definiremos nuestro repositorio similar al de ImagesRepositoryImpl, pero con pocos cambios
+        Por ejemeplo
+            Teniamos un método llamado containsImages. ahora lo cambiamos contains.hashtags, con entiti.hashtag
 
+                    private boolean containsHashtags(Tweet tweet) {
+                        return  tweet.entities != null && //tiene entities
+                                tweet.entities.hashtags != null && //estos entities tienen hashtags
+                                !tweet.entities.hashtags.isEmpty();//y estos hashtags no sean vacíos
+                    }
+
+
+
+            dentro de getHashtags método vamos a usar
+
+                "Hashtag TweetModel"    que es un hashtag como modelo
+
+                a.-) mandamos el id, los favoritos y  ahora ya no voy a tener este "http" porque no tengo
+                imágenes sino "Hashtags" de hecho talvez podría venir, no voy a validar sino simplemente
+                voy a colocar el texto directamente le hacemos "tweet.text"
+
+                 Callback<List<Tweet>> callback=new Callback<List<Tweet>>() {
+
+                            @Override
+                            public void success(Result<List<Tweet>> result) {
+                                List<Hashtag> items=new ArrayList<>();
+                                for (Tweet tweet:result.data){
+                                    if (containsHashtags(tweet)){
+
+                            a.-)
+                                        Hashtag hashtagModel=new Hashtag();
+                                        hashtagModel.setId(tweet.idStr);
+                                        hashtagModel.setFavoriteCount(tweet.favoriteCount);
+                                        hashtagModel.setTweetText(tweet.text);
+
+                            b.-)
+                                        List<String> hashtags=new ArrayList<String>();
+                                        for (HashtagEntity hashtag:tweet.entities.hashtags){
+
+                            c.-)
+                                            hashtags.add(hashtag.text   );
+
+                                        }
+                                        hashtagModel.setHashtags(hashtags);
+                                        items.add(hashtagModel);
+                                    }
+                                }
+
+                            d.-)
+
+                                Collections.sort(items, new Comparator<Hashtag>() {
+                                    public int compare(Hashtag t1, Hashtag t2) {
+                                        return t2.getFavoriteCount() - t1.getFavoriteCount();
+                                    }
+                                });
+                                postHashtags(items);
+
+
+                b.-) Necesito es ir a traer los "Hashtags" entonces vamos a definir los un
+                listados que se llame "hashtags" es un "new ArrayList" de "Strings" entonces vamos hacer
+                un ciclo y "Twitter" tiene un "hashtag entities" entonces sobre este "hashtag entities" voy
+                a trabajar y estos vienen en "tweet.entities.hashtags" recordemos que no viene vacío, porque ya
+                valide eso, tenemos aquí un "String", vamos hacer un "setHashtags" con el listado que agregamos
+
+                c.-) Dentro del cuerpo de este "Loop"  vamos agregar entonces que al listado "hashtags" se le agregue este entidad pero únicamente
+                el texto, tiene varios elementos, me interesa únicamente el texto al final agregamos esto
+                a "Items" que es un listado de "Hashtags"
+
+
+                d.-) Ordenamos al terminar ese listado siempre   por el "favoriteCount" y eventualmente lo publicamos para que lo reciba el presentador
+                que se lo haga llegar a la vista, entonces con esto, tenemos listo nuestro repositorio
 
 
 
