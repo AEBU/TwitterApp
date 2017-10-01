@@ -1949,3 +1949,325 @@ Commit17
                     android:text="@string/app_name"
                     android:layout_height="wrap_content"
                     android:id="@+id/txtHashtag" />
+
+
+Commit18
+        :HashtagsMVP
+
+        Para hacer un poco de práctica de lo que hemos aprendido hasta ahora, vamos a realizar los mismo que hicimos para ImagesMVP, aplicado a HashtagsMVP
+
+        1.- "entity Hashtag"Primero definimos nuestra entidad a usar "Hashtag", es similiar a "Images" entity, pero aumentamos cosas como
+                List<String> hashtags; que me ayuda a traer mi hashtags asociados, y eliminamos  "String imageUrl"
+                Obteniendo así estos atributos dentro de mi hashtags
+
+                        private String id;
+                        private String tweetText;
+                        private int favoriteCount;
+                        private List<String> hashtags;//atributo añadido en vez de ImageUrl, el cual representa los hashtags asociados al Tweet, es el único cambio en el modelo
+                        private final static String BASE_TWEET_URL = "https://twitter.com/null/status/";
+
+
+        2.- "interface HashtagsView"Definimos a la vista, que teníamos como ImagesView, este va a ser HashtagsView
+                Como en las imágenes pues teníanmos metodos que mostraban y ocultaban elementos,(imágenes), y métodos para ocultar y mostrar el progressBar
+                También para notificar algún error al cargarse, por último un método setContent que llama a un List de Hashtags
+
+                Obteniendo así estos métodos, que HashtagsPresenterImpl creará a su debido tiempo, ya sea para mostrar o solo para ocultar, algo a tener en cuenta es que
+                mostramos en el onEventMainThread creado para eventBus, en el cual nos subscribimos
+                ocultamos cuando estamos usando getImagesTweets.
+
+                void showElements();
+                void hideElements();
+                void showProgress();
+                void hideProgress();
+
+                void onError(String error);
+                void setContent(List<Hashtag> items);//este ayuda a enviar los hashtgas dentro del adapter para que se carguen dentro del recyclerView
+
+
+        3.- "interface HashtagPresenter", en este paso definiremos el presentador, que como ya sabemos es el intermediario entre la vista y modelo de datos
+            dará inteligencia a la vista y este recibe las interfaces que se implementan en la vista y el modelo, en nuestro caso ya que combiamos algunas arquitecturas, pues con el Interactuador
+            podemos encontrar mas explicación dentro del link https://www.imaginanet.com/blog/patron-mvp.html
+
+                En este caso tenemos los mismos métodos para nuestro Subscripción de EventBus, pero además tenemos un Evento para este, y su respectivos hashtags a obtener
+
+                    void onResume();
+                    void onPause();
+                    void onDestroy();
+                    void getHashtagTweets();
+                    void onEventMainThread(HashtagEvent event);
+
+        4.- "interface HashtagsInteractor" , como  ya sabemos este hace intermeio entre el presentador y el modelo dejando a los respositorios con toda la lógica que se necesita
+            y en nuestro método execute pues traerá lo que hemos definido para obtener, es decir este hace la llamada al API de twitter llamando al repositorio que nos ayuda a interactura
+
+                    void execute();
+
+        5.- "interface HashtagsRepository", es el que tienen el método de traer nuestros datos, pero ya implementados por loque definio que hará en este tema
+            por lo que ahora tendrémos un getHashtags
+
+                    void getHashtags();
+
+    Para los evetos de EventBus
+        6.- "class HashtagsEvent" tendrémos un listado de Hashtags que ayudarán a usar en nuestras clases que implementan este evento,(HashtagsPresenterImpl),y un error que ayudrá a observar si tuvimos algún error al traerlos
+
+                    private String error;
+                    private List<Hashtag> hashtags;
+
+                    public String getError() {
+                        return error;
+                    }
+
+                    public void setError(String error) {
+                        this.error = error;
+                    }
+
+                    public List<Hashtag> getHashtags() {
+                        return hashtags;
+                    }
+
+                    public void setHashtags(List<Hashtag> hashtags) {
+                        this.hashtags = hashtags;
+                    }
+
+
+    Para implementaciones
+
+        7.- "class HashtagsPresenterImpl", esta clase es una implementación de nuestro contrato de Presentador y el Interacctuador
+            para aquello necesitaremos
+                EventBus            para registrar nuestros eventos
+                HashtagsView        para la vista de nuestros hashtags
+                HashtagsInteractor  para nuestro conector con el modelo, repository
+
+            aquí implementamos algunos métodos que nos servirán para la vista, EventBus, y el Interactor
+
+                onResume            eventBus.register(this)         //cuando la vista esta visible nos registramos
+                onPause             eventBus.unregister(this)       //cuando la vista se manda a pausa se quita el registro
+                onDestroy           view=null                       //eliminamos el memory lick de la vista haciéndola nula
+
+                getHashtagTweets
+                                    if (this.view != null){         //primero verificamos si la vista es diferente de null, para
+                                        view.hideElements();        //ocultar nuestros Elementos y
+                                        view.showProgress();        //mostrar nuestro progressBar
+                                    }
+                                    this.interactor.execute();      //luego ejecutamos nuestro interactor, recordemos qeu este execute del interactor es el que obteine los hashtags(o imágenes según como este definido) desde el repository
+
+
+                onEventMainThread                                   //método de subscriber para EventBus
+
+                    String errorMsg=event.getError();               //obtengo mi error puede ser nulo cuando no lo tenga
+                    if (this.view!=null){                           //volvemos a verificar nuestra vista diferente de null y
+                        view.showElements();                        //mostramos los elementos que es lo que estabamos viendo dentro de hashtagsFragments
+                        view.hideProgress();                        //ocultamos el progressBar
+                        if (errorMsg != null) {                     //verificamos si el mensaje es diferente de null
+                            this.view.onError(errorMsg);            //y le mandamos a la vista el error
+                        } else {
+                            this.view.setContent(event.getHashtags());  //y mandamos a la vista los hashtags encontrados
+
+                        }
+                    }
+
+
+        8.- "class HashtagsInteractorImpl" aquí vamos a implementar el método execute definido dentro de "HashtagsInteractor"
+            como vimos este Interactuador necesita
+                HashtagsRepository                  repository      //para hacer la lógica dentro de "HashtagsRepositoryImpl"
+                public HashtagsInteractorImpl       Constructor     //para usar el constructor que necesito
+
+            Método Sobrecargado
+
+                execute()               repository.getHashtags      //para traer los hashtags que necesito desde el repositorio
+
+        9.- "class HashtagsRepositoryImpl" aquí vamos a hacer las llamadas a la API de twitter, con esto logramos un código desacoplado de cada librería y mucho mas escalable
+            ...LO DEJAMOS PARA EL OTRO VIDEO
+
+
+
+
+
+    Para adapters del RecyclerView
+        100.-Crear una clase Adapter(RecyclerView), que hereda de RecyclerView.Adapter, <ClaseNombre.ViewHolder>, implementar métodos y crear la clase ViewHolder dentro que herede de ViewHolder
+            y le damos la lógica que necesitamos para que se instancia, al llamarla le hacemos los métodos para que este use todo loq ue hemos definido
+
+                public class HashtagsAdapter extends RecyclerView.Adapter<HashtagsAdapter.ViewHolder> {
+
+                    @Override
+                    public HashtagsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                        return null;
+                    }
+
+                    @Override
+                    public void onBindViewHolder(HashtagsAdapter.ViewHolder holder, int position) {
+
+                    }
+
+                    @Override
+                    public int getItemCount() {
+
+                    }
+
+                    public class ViewHolder extends RecyclerView.ViewHolder {
+                        ....
+                    }
+                }
+
+        101.- Podemos necesitar controlar un click dentro de este, ya sea un click largo o un click sencillo por lo que usaremos una interfaz que ayude a ver que estamos haciendo
+              Definimos una interfaz que se llamará onItemClickListenerHashtags para controlar el onItemClickListener de cada vista, no le ponemos solo onItemClickListener ya que se confundiría dentro de cada llamada con el ClickListener del Images
+
+                    public interface OnItemClickListenerHashtags {
+                        void onItemClick(Hashtag tweet);
+                        //void onItemClickListener(Images tweet)
+                        //void onItemClickLong(Images tweets)
+                    }
+              En este apartado podemos comunicar cualquier tipo de objeto al hacer un click ya sea una lista o colección
+              o un objeto simple definido, ademas podemos ponerle un onItemClickLong para controlar los click largos
+                    para llamaralos dentro de n uestro adapatador solo debemos controlar una vista dentro del ViewHolder
+
+                   //para hashtags con click
+                            public void setOnClickListener(final Hashtag hashtag, final OnItemClickListenerHashtags listenerHashtags){
+                                view.setOnClickListener(new View.OnClickListener(){
+                                    @Override
+                                    public void onClick(View view) {
+                                        listenerHashtags.onItemClick(hashtag);
+                                    }
+                                });
+                            }
+                    // para Imgae con click
+                            public void setOnClickListener(final Image image, final OnItemClickListenerHashtags listenerHashtags){
+                                        view.setOnClickListener(new View.OnClickListener(){
+                                            @Override
+                                            public void onClick(View view) {
+                                                listenerHashtags.onItemClick(image);
+                                            }
+                                        });
+                            }
+                    // para longClick
+                            public void setOnClickListener(final Hashtag hashtag, final OnItemClickListenerHashtags listenerHashtags){
+                                        view.setOnLongClickListener(new View.OnClickListener(){
+                                            @Override
+                                            public void onClick(View view) {
+                                                listenerHashtags.onItemClick(hashtag);
+                                            }
+                                        });
+                            }
+
+        103.-
+
+    Para Inyección de dependencias "módulos de inyección", como recordamos necesitabamos 1 clase que es el módulo que provee las clases y dependencias, y 1 interfaz que provee los métodos inject o getClass, recordando también que todo lo que ponemos como inject necesitammos tener en el módulo
+    Vemos que la inyección teníamos dos opciones una para usarla desde la clase que lo implementa,  u otra para usarla desde el Application, ya que esta da una instancia a toda la aplicación , en este caso usaremos la segunda opción
+
+        7.- "class HashtagsModule"
+            Para este módulo de inyección tenemos una diferencia, ya no vamos a mostrar ningún contenido, entonces no necesitamos un imageLoader si no unicamente un "dataset", y el "clickListener", tomemos en cuenta que lo usamos para
+            ver que se va a mostrar dentro de la vista (Actividad, Fragment,...),en este caso:
+                    para proveernos un Adapter que lo necesitamos como al dar un click hacemos algo en concreto por eso usamos un onItemClickListener
+                    List<Hashtag> dataset               //lista de Tweets y su respectiva lista de Hashtags
+                    OnItemClickListener listener        //evento que controla el click dentro de cada item
+
+
+            En resumen necesitamos
+                HashtagsView view,// una vista para trabajar sobre ella porque esta no se la puede inyectar
+                OnItemClickListener listener // que me ayuda a manejar el click , igual no se lo puede inyectar es por eso que usamos dentro del constructor
+
+                Esta clase nos proveerá de un Adapter, "HashtagAdapter" a través de una lista de Hashtags y un ClickListener
+                no olvidarnos de colocarle dentro de sus respectivas anotaciones
+                    @Provides
+                    @Singleton
+
+                Hasta ahora tenemos algo como esto:
+
+                    private HashtagsView view;
+                    private OnItemClickListenerHashtags listenerHashtags;
+
+                    public HashtagsModule(HashtagsView view, OnItemClickListenerHashtags listenerHashtags) {
+                        this.view = view;
+                        this.listenerHashtags = listenerHashtags;
+                    }
+
+
+                    @Provides
+                    @Singleton
+                    HashtagsAdapter providesHashtagsAdapter(List<Hashtag> dataset, OnItemClickListenerHashtags listenerHashtags){
+                        return new HashtagsAdapter(dataset,listenerHashtags);
+                    }
+
+                Ahora vemos que necesitamos algo que me provea de List<Hashtag>, un onItemClick, por lo que necesitamos una cascada de proviciones de estos objetos, quedando un grafo de la siguiente manera
+
+                    HashtagsAdapter providesAdapter
+                        "Depende"       List<Hashtag>,OnItemClickListener listener
+
+                        List<Hashtag> providesItemsList
+                        "retorna"        ArrayList<Hashtag>();
+                        OnItemClickListenerHashtags providesOnItemClickListener
+                        "retorna"        repository this.listenerHashtags
+
+                    HashtagsPresenter provideImagesPresenter
+                        "Depende"        EventBus eventBus, HashtagsView view, HashtagsInteractor interactor
+
+                        HashtagsView provideHashtagsView
+                        "retorna"            this.view
+                        HashtagsInteractor providesHashtagsInteractor
+                        "Depende"           HashtagsRepository repository
+                        "retorna"           HashtagsInteractorImpl
+
+                                    HashtagsRepository providesHashtagsRepository
+                                    "Depende"       EventBus eventBus, CustomTwitterApiClient client
+                                    "retorna"       HashtagsRepositoryImpl
+
+                                        providesCustomTwitterApiClient
+                                        "Depende"       TwitterSession session
+                                        "retorna"       CustomTwitterApiClient(session)
+
+                                        providesTwitterSession
+                                        "retorna"       TwitterCore.getInstance().getSessionManager().getActiveSession();
+
+        8.- "interface HashtagsComponent"
+            En este apartado siempre debemos hacer las anotaciones
+                @Singleton                                                      //dagger annotation
+                @Component(modules = {HashtagsModule.class,LibsModule.class})   //aquí definimos todos los módulos que necesitamos para crear nuestra inyección
+
+            Y definimos el inject dentro de la vista
+                void inject(HashtagsFragment hashtagsFragment);
+
+            Algo a tener en cuenta es que todo lo que definamos en esta interfaz debe de estar en la clase Modules
+
+                void inject...      inyecta todas las clases que necesito
+                ImagesPresenter     inyecta solo imagesPresenter no toda la cascada de independencias
+
+        9.- "Para implementar estas independencias"
+            Para usar estas independencias debemos instanciar ya sea en la clase que necesita de la implementación, o en la clase aplicación
+            a.- 1 Manera, con la inyección dentro de cada clase
+                private void setupInjection() {
+                        DaggerHashtagsComponent
+                                .builder()
+                                .libsModule(new LibsModule(this))
+                                .twitterAppModule(new TwitterAppModule(getContext()))
+                                .hashtagsModule(new HashtagsModule(this, this))
+                                .build()
+                                .inject(this);
+                    }
+            b.- 2 Manera, con inyección dentro de la APP
+                Class que extiende de AplicationClass
+                public HashtagsComponent getHashtagsComponent(HashtagsView view, OnItemClickListenerHashtags listenerHashtags){
+                    return DaggerHashtagsComponent
+                                .builder()
+                                .libsModule(new LibsModule())
+                                .hashtagsModule(new HashtagsModule(view,listenerHashtags))
+                                .build();
+                    }
+
+            Explicación: la clase generada por dagger hemos de  construila a partir de las librerías que ncesita, en este caso
+            "libsModule", y "hashtagsModule", mandándole los parámetros para nuestro correcto ingreso de parámetros, pero este caso en LibsModule puede ir con null o Creamos un constructor sin parámetros
+            ya que solo estamos usando la vista y el onClickListener, porque el Fragmento como recordamos lo usabamso para Glide
+            ya que este era como Picasso para las imágenes y como no tenemos imágenes que queremos cargar no es necesario.
+
+            Cabe recalcar que este es el motivo por el cual en HashtagsModule no teníamos una instancia de EventBus ya que este ya era proveído por "libsModule"
+
+            NOTA: Algo para tener en cuenta es qeu primero debemos compilar, para que use esta clase "DaggerHashtagsComponent" y luego poder construirla
+
+    Presentador,Interactuador,funcionan de manera similar pero en adaptadores para childAdapter y respositorios son diferentes
+
+
+
+
+
+
+
+
+

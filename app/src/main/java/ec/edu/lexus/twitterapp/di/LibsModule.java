@@ -26,6 +26,9 @@ import ec.edu.lexus.twitterapp.lib.base.ImageLoader;
 public class LibsModule {
     private Fragment fragment;
 
+    public LibsModule() {
+    }
+
     public LibsModule(Fragment fragment) {
         this.fragment = fragment;
     }

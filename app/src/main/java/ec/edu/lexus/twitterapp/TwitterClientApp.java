@@ -11,11 +11,17 @@ import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.core.TwitterConfig;
 
 import ec.edu.lexus.twitterapp.di.LibsModule;
+import ec.edu.lexus.twitterapp.hashtags.di.DaggerHashtagsComponent;
+import ec.edu.lexus.twitterapp.hashtags.di.HashtagsComponent;
+import ec.edu.lexus.twitterapp.hashtags.di.HashtagsModule;
+import ec.edu.lexus.twitterapp.hashtags.ui.HashtagsView;
+import ec.edu.lexus.twitterapp.hashtags.ui.adapters.OnItemClickListenerHashtags;
 import ec.edu.lexus.twitterapp.images.di.DaggerImagesComponent;
 import ec.edu.lexus.twitterapp.images.di.ImagesComponent;
 import ec.edu.lexus.twitterapp.images.di.ImagesModule;
 import ec.edu.lexus.twitterapp.images.ui.ImagesView;
 import ec.edu.lexus.twitterapp.images.ui.adapters.OnItemClickListener;
+import retrofit2.http.PUT;
 
 /**
  * Created by Alexis on 26/09/2017.
@@ -44,6 +50,14 @@ public class TwitterClientApp extends Application {
                 .builder()
                 .libsModule(new LibsModule(fragment))
                 .imagesModule(new ImagesModule(view, listener))
+                .build();
+    }
+
+    public HashtagsComponent getHashtagsComponent(HashtagsView view, OnItemClickListenerHashtags listenerHashtags){
+        return DaggerHashtagsComponent
+                .builder()
+                .libsModule(new LibsModule())
+                .hashtagsModule(new HashtagsModule(view,listenerHashtags))
                 .build();
     }
 

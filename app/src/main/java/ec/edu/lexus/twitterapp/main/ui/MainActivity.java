@@ -16,7 +16,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import ec.edu.lexus.twitterapp.LoginActivity;
 import ec.edu.lexus.twitterapp.R;
-import ec.edu.lexus.twitterapp.hashtags.HashtagsFragment;
+import ec.edu.lexus.twitterapp.hashtags.ui.HashtagsFragment;
 import ec.edu.lexus.twitterapp.images.ui.ImagesFragment;
 import ec.edu.lexus.twitterapp.main.ui.adapters.MainSectionsPagerAdapter;
 

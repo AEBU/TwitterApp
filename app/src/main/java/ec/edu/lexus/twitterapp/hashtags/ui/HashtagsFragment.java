@@ -1,4 +1,4 @@
-package ec.edu.lexus.twitterapp.hashtags;
+package ec.edu.lexus.twitterapp.hashtags.ui;
 
 
 import android.os.Bundle;
@@ -7,12 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.List;
+
 import ec.edu.lexus.twitterapp.R;
+import ec.edu.lexus.twitterapp.entities.Hashtag;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class HashtagsFragment extends Fragment {
+public class HashtagsFragment extends Fragment implements HashtagsView{
 
 
     public HashtagsFragment() {
@@ -27,4 +30,33 @@ public class HashtagsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_hashtags, container, false);
     }
 
+    @Override
+    public void showElements() {
+
+    }
+
+    @Override
+    public void hideElements() {
+
+    }
+
+    @Override
+    public void showProgress() {
+
+    }
+
+    @Override
+    public void hideProgress() {
+
+    }
+
+    @Override
+    public void onError(String error) {
+
+    }
+
+    @Override
+    public void setContent(List<Hashtag> items) {
+
+    }
 }
