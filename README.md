@@ -2083,7 +2083,7 @@ Commit18
 
 
     Para adapters del RecyclerView
-        100.-Crear una clase Adapter(RecyclerView), que hereda de RecyclerView.Adapter, <ClaseNombre.ViewHolder>, implementar métodos y crear la clase ViewHolder dentro que herede de ViewHolder
+        10.-Crear una clase Adapter(RecyclerView), que hereda de RecyclerView.Adapter, <ClaseNombre.ViewHolder>, implementar métodos y crear la clase ViewHolder dentro que herede de ViewHolder
             y le damos la lógica que necesitamos para que se instancia, al llamarla le hacemos los métodos para que este use todo loq ue hemos definido
 
                 public class HashtagsAdapter extends RecyclerView.Adapter<HashtagsAdapter.ViewHolder> {
@@ -2108,7 +2108,7 @@ Commit18
                     }
                 }
 
-        101.- Podemos necesitar controlar un click dentro de este, ya sea un click largo o un click sencillo por lo que usaremos una interfaz que ayude a ver que estamos haciendo
+        11.- Podemos necesitar controlar un click dentro de este, ya sea un click largo o un click sencillo por lo que usaremos una interfaz que ayude a ver que estamos haciendo
               Definimos una interfaz que se llamará onItemClickListenerHashtags para controlar el onItemClickListener de cada vista, no le ponemos solo onItemClickListener ya que se confundiría dentro de cada llamada con el ClickListener del Images
 
                     public interface OnItemClickListenerHashtags {
@@ -2148,9 +2148,9 @@ Commit18
                                         });
                             }
 
-        103.-Para Usar un RecyclerView Anidado usaremos el Commit19, así que dirijamonos para allá
+        12.-Para Usar un RecyclerView Anidado usaremos el Commit19, así que dirijamonos para allá
 
-        104.-para hacer la llamada podemos tener un GridLayoutManager, y un LinearLayoutManager de acuerdo a como sea nuestra opción de vista
+        13.-para hacer la llamada podemos tener un GridLayoutManager, y un LinearLayoutManager de acuerdo a como sea nuestra opción de vista
                 ParaGridLayout
                     private void setupRecyclerView() {
                             recyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
@@ -2161,10 +2161,13 @@ Commit18
                             recyclerViewContacts.setLayoutManager(new LinearLayoutManager(this));
                             recyclerViewContacts.setAdapter(adapter);
                     }
+
+        15.-Para usar e implmentar dentro de las clases que son principales como Fragments o Activities, nos dirigimos al commit21
+
     Para Inyección de dependencias "módulos de inyección", como recordamos necesitabamos 1 clase que es el módulo que provee las clases y dependencias, y 1 interfaz que provee los métodos inject o getClass, recordando también que todo lo que ponemos como inject necesitammos tener en el módulo
     Vemos que la inyección teníamos dos opciones una para usarla desde la clase que lo implementa,  u otra para usarla desde el Application, ya que esta da una instancia a toda la aplicación , en este caso usaremos la segunda opción
 
-        7.- "class HashtagsModule"
+        16.-.- "class HashtagsModule"
             Para este módulo de inyección tenemos una diferencia, ya no vamos a mostrar ningún contenido, entonces no necesitamos un imageLoader si no unicamente un "dataset", y el "clickListener", tomemos en cuenta que lo usamos para
             ver que se va a mostrar dentro de la vista (Actividad, Fragment,...),en este caso:
                     para proveernos un Adapter que lo necesitamos como al dar un click hacemos algo en concreto por eso usamos un onItemClickListener
@@ -2228,7 +2231,7 @@ Commit18
                                         providesTwitterSession
                                         "retorna"       TwitterCore.getInstance().getSessionManager().getActiveSession();
 
-        8.- "interface HashtagsComponent"
+        17.- "interface HashtagsComponent"
             En este apartado siempre debemos hacer las anotaciones
                 @Singleton                                                      //dagger annotation
                 @Component(modules = {HashtagsModule.class,LibsModule.class})   //aquí definimos todos los módulos que necesitamos para crear nuestra inyección
@@ -2241,7 +2244,7 @@ Commit18
                 void inject...      inyecta todas las clases que necesito
                 ImagesPresenter     inyecta solo imagesPresenter no toda la cascada de independencias
 
-        9.- "Para implementar estas independencias"
+        18.- "Para implementar estas independencias"
             Para usar estas independencias debemos instanciar ya sea en la clase que necesita de la implementación, o en la clase aplicación
             a.- 1 Manera, con la inyección dentro de cada clase
                 private void setupInjection() {
@@ -2473,6 +2476,81 @@ Commit20
 
                 d.-) Ordenamos al terminar ese listado siempre   por el "favoriteCount" y eventualmente lo publicamos para que lo reciba el presentador
                 que se lo haga llegar a la vista, entonces con esto, tenemos listo nuestro repositorio
+
+
+Commit21
+            :Implement_In_HashtagFragment
+
+        En HashtagFragment
+            Seguimos y en esta caso nos toca "HashtagsFragment" el cual implementará la vista que hemos definido y el onItemClickListenerHashtags creado anteriormente
+
+                     public class HashtagsFragment extends Fragment implements HashtagsView, OnItemClickListenerHashtags{{
+                        ...
+                     }
+             Implementamos los métodos necesarios, Como estamos reutilizando contents, para no utlizar un fragment_...xml para cada Fragmento hemos usado
+             uno general como lo es fragment_content y este al igual que ImagesFragment crea los mismos cmapos necesarios, hasta con las dependencias para el inject como lo vemos en este apartado
+
+                    @BindView(R.id.recyclerView)
+                    RecyclerView recyclerView;
+                    @BindView(R.id.progressBar)
+                    ProgressBar progressBar;
+                    @BindView(R.id.container)
+                    FrameLayout container;
+
+                    @Inject
+                    HashtagsPresenter presenter;
+                    @Inject
+                    HashtagsAdapter adapter;
+
+            En onCreateView creamos nuestra vista y los respectivos setups, ya sea para el inyector de independencias como el recyclerView, algo a tener en cuenta es que hemos cmabiado de GridLayout, ahora es un LinenarLayout, esto es para el parent
+                de RecyclerView, el Child Tiene un GridLayout Custom
+
+                            View view = inflater.inflate(R.layout.fragment_content, container, false);
+                            ButterKnife.bind(this, view);
+                            setupInject();
+                            setupRecyclerView();
+                            presenter.getImageTweets();
+                            return view;
+
+            Dentro de los setups, vamos a realizar nuestras inyecciones
+                        //cambiamos a linenar layoutManager
+                        private void setupRecyclerView() {
+                            recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+                            recyclerView.setAdapter(adapter);
+                        }
+                    Aquí el adaptador "adapter" es HashtagAdapter que esta siendo inyectado como el componente que hemos definido abajo
+
+                        //mandamos nuestra inyección, obtenemos el aplicationClass un componente que recibe una vista y un onClickListener, el módulo de librerías no esta recibiendo el fragmente necesario para obtener imágenes con glide y es por eso que no necesitmaos el Fragment como parámetro
+                        private void setupInject() {
+                            TwitterClientApp app=(TwitterClientApp)getActivity().getApplication();
+                            HashtagsComponent hashtagsComponent=app.getHashtagsComponent(this,this);
+                    //        presenter=imagesComponent.getPresenter();
+                            hashtagsComponent.inject(this);
+
+                        }
+
+                    Para eventBus vamos a usar
+                        onResume               presenter.onResume()            //para subscribir mi eventbus
+                        onPause                presenter.onPause()             //para desuscribirme de eventbus
+                        onDestroy              presenter.onDestroy              //para destruir la vista y evitar el memory lick
+
+                    Para la vista
+
+                        showElements        recyclerView.VISIBLE                //hacemos viscible el recuclerView
+                        hideElements        recyclerView.GONE                   //hacemos invisible el recyclerView
+
+                        showProgress
+                        hideProgress
+                    Para error
+
+                        onError             Snackbar.make(container,error,Snackbar.LENGTH_SHORT).show();    //hacemos un snackbar dentro de nuestro container(FrameLayout)
+                        setContent          adapter.setItems(items)                                         //mandamos items de Hashtags a nuestro adaptador
+
+                        onItemClick         recibimos el Hashtag y lo creamos con nuestro URL que tenemos para que este nos dirija ya sea a Chrome o directamente en la aplicación de Twitter
+
+
+
+
 
 
 

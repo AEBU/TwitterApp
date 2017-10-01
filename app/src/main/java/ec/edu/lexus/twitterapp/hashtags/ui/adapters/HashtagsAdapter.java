@@ -1,6 +1,7 @@
 package ec.edu.lexus.twitterapp.hashtags.ui.adapters;
 
 import android.content.Context;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,8 +75,8 @@ public class HashtagsAdapter extends RecyclerView.Adapter<HashtagsAdapter.ViewHo
             items = new ArrayList<String>();
             adapter= new HashtagListAdapter(items);
 
-            CustomGridLayoutManager layoutManager=new CustomGridLayoutManager(context,3);
-            recyclerViewHashtags.setLayoutManager(null);
+            //CustomGridLayoutManager layoutManager=new CustomGridLayoutManager(context,3);
+            recyclerViewHashtags.setLayoutManager(new GridLayoutManager(context,3));
             recyclerViewHashtags.setAdapter(adapter);
 
         }

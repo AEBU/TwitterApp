@@ -20,7 +20,7 @@ public class CustomGridLayoutManager extends GridLayoutManager {
     }
 
     /*
-    public CustomLinearLayoutManager(Context context, int orientation, boolean reverseLayout)    {
+        public CustomLinearLayoutManager(Context context, int orientation, boolean reverseLayout)    {
         super(context, orientation, reverseLayout);
     }
     */

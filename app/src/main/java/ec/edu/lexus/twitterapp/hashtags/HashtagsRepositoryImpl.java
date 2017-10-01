@@ -65,9 +65,12 @@ public class HashtagsRepositoryImpl implements HashtagsRepository{
 
             @Override
             public void failure(TwitterException exception) {
+                postError(exception.getLocalizedMessage());
 
             }
         };
+        client.getTimeLineService().homeTimeline(TWEET_COUNT,true,true,true,true).enqueue(callback);
+
     }
 
     private boolean containsHashtags(Tweet tweet) {
