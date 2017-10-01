@@ -2148,8 +2148,19 @@ Commit18
                                         });
                             }
 
-        103.-
+        103.-Para Usar un RecyclerView Anidado usaremos el Commit19, así que dirijamonos para allá
 
+        104.-para hacer la llamada podemos tener un GridLayoutManager, y un LinearLayoutManager de acuerdo a como sea nuestra opción de vista
+                ParaGridLayout
+                    private void setupRecyclerView() {
+                            recyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
+                            recyclerView.setAdapter(adapter);
+                    }
+                Para LinearLayout
+                    private void setupRecyclerView() {
+                            recyclerViewContacts.setLayoutManager(new LinearLayoutManager(this));
+                            recyclerViewContacts.setAdapter(adapter);
+                    }
     Para Inyección de dependencias "módulos de inyección", como recordamos necesitabamos 1 clase que es el módulo que provee las clases y dependencias, y 1 interfaz que provee los métodos inject o getClass, recordando también que todo lo que ponemos como inject necesitammos tener en el módulo
     Vemos que la inyección teníamos dos opciones una para usarla desde la clase que lo implementa,  u otra para usarla desde el Application, ya que esta da una instancia a toda la aplicación , en este caso usaremos la segunda opción
 
@@ -2264,7 +2275,130 @@ Commit18
     Presentador,Interactuador,funcionan de manera similar pero en adaptadores para childAdapter y respositorios son diferentes
 
 
+Commit19
+        :Nested_RecyclerView(RecyclerView Anidado)
 
+    Procedemos a hacer un Nested RecyclerView para el texto y los Hashtags que poseemos dentro de nuestra lógica
+
+    En HashtagsAdapter vamos a comenzar cambiando el "ViewHolder"
+    que antes recibía un "View", ahora además va recibir un contexto
+    Este contexto me va servir para construir el "Layout Manager " de
+    cada uno de los "RecyclerViews" que van a ir dentro del "ViewHolder "
+        public class HashtagsAdapter extends RecyclerView.Adapter<HashtagsAdapter.ViewHolder> {
+         ...
+            public class ViewHolder extends RecyclerView.ViewHolder {
+            ...
+            public ViewHolder(View itemView, Context context) {
+            ...
+         ...
+
+    entonces voy a necesitar también agregar aquí un "Bind" hacia "RecyclerView"y el texto definido en el layout del content_hashtags
+    Entonces dentro del "ViewHolder"
+        dentro del constructor del "ViewHolder" voy a tener que, hacer un método o recibir en el constructor para colocar los "Items"
+
+    así como tenía un "Bind" anterior ahora puedo recibir en el constructor o hacerlo en él,
+    un método, ¿qué vamos hacer? vamos agregar aquí además de la vista "View view" un "private HashtagListAdapter"
+    que este únicamente va referenciar a texto, entonces va ser un adaptador relativamente
+    simple, pero un adapatador con sus respectivas clases a implementar
+
+    Creamos el HashtagsListAdapter definiendo
+            private List<String> items;     // un listado de elementos, son "Strings" le vamos a llamar "Items" y por supuesto vamos
+
+            ....
+            //creamos la vista de acuerdo a el layout definido como row_hashtag_text
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_hashtag_text, parent, false);
+
+        En ViewHolder
+            //Hacemos el "bind" hacia text de nuestro layout en "row_hashtags_text"
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_hashtag_text, parent, false);
+
+        En onBindViewHolder
+            //Lo que va ser es "holder.txthashtag.setText" en base "Items.get(position)"
+            holder.txtHashtag.setText(items.get(position));
+
+    Y los otros métodos que por lógica ya lo tenemos definidos
+
+
+    En HashtagsAdapter
+        En ViewHolder de este Adaptador
+
+            Voy a ser uso de este adaptador dentro del "ViewHolder", aquí, entonces tengo definido el adaptador, aquí defino, después de la
+            1.-vista, definimos, los "items" como un "ArraysList"
+            2.-vamos a construir nuestro adaptador en base a la variable de items(dentro del constructor)
+            3.-Necesito un "LayoutManager" específico para el "RecyclerView" colocando
+                    un "setLayoutManager"           //por el momento "null"
+                    un "setAdapter(adapter)"        //para definir el adaptador de HashtagListAdapter
+
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+        ...
+        private View view;
+        private HashtagListAdapter adapter;
+        private ArrayList<String> items;
+        public ViewHolder(View itemView, Context context) {
+           ...
+
+            items = new ArrayList<String>();
+            adapter= new HashtagListAdapter(items);
+
+            CustomGridLayoutManager layoutManager=new CustomGridLayoutManager(context,3);
+            recyclerViewHashtags.setLayoutManager(null);
+            recyclerViewHashtags.setAdapter(adapter);
+
+        }
+
+    Creamos el método "public void setItems" (fuera del Constructor) con los "Items" necesarios para mostrar
+        1.- Como voy a reciclar vistas, previo a mostrarlo voy hacer un "clear"
+        2.- Voy a agregar un "addAll" los nuevos elementos
+        3.- Por último le aviso, al adaptador que cambiaron los datos,
+
+                    public void setItems(List<String> newItems){
+                        items.clear();
+                        items.addAll(newItems);
+                        adapter.notifyDataSetChanged();
+                    }
+
+    Procedemos a crear un LayoutManager personalizado con la la idea, de que, no tenga problema a la hora de anidar "ReciclerViews"
+    es muy parecido al "GridLayoutManager" pero va a tener ciertos métodos implementados, lo encontramos el código en StackOverFlow link(https://stackoverflow.com/questions/26649406/nested-recycler-view-height-doesnt-wrap-its-content)
+    lo único que cambiamos es que estaba para un  "LinearLayout" y ahora está para un "GridLayout"
+    Le vamos a llamar "CustomGridLayoutManager" esto va requerir
+            1.-un contexto, por eso es que necesito un contexto dentro del Constructor de este ViewHolder,
+            2.-la cantidad de columnas que quiero mostrar
+
+                CustomGridLayoutManager layoutManager=new CustomGridLayoutManager(context,3);
+
+
+
+    Regreasamos a HashtagsAdapter
+
+
+        "ViewHolder"
+            porque necesitamos enviar un contexto además de la vista esto lo voy hacer a través de "parent.getContext"
+            recordemos que ese "parent" es la vista de donde estamos mostrando el listado, la grilla, el "Recycler"
+
+                @Override
+                public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                    View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.content_hashtags, parent, false);
+                    return new ViewHolder(view,parent.getContext());
+                }
+
+        "onBindViewHolder"
+            lo que, lo que se va modificar es que, además del "setText" y el "ClickOnListener" vamos a decir "holder.setItems" y estos "Items"
+            lo vamos a obtener de este "tweet" le ponemos "getHashtags", con esto ya estoy obteniendo
+            el listado "Hashtags" que tiene guardado el objeto, la entidad que representa este modelo,
+            básico de un "Hashtag" entoncesestos "hashtags" se los estoy enviando al "holder", el "holder" lo que hace es limpia
+            los "items" que tenía antes, los agrega en este listado y le avisa al adaptador, noten
+            que a diferencia de cómo lo venía manejando aquí no encerré la lógica, dentro del "hashtagsListAdapter"
+            sino que esta fuera y es través de este listado de "Items" en donde yo mantengo un control
+            de que voy a estar mostrando
+
+                @Override
+                public void onBindViewHolder(ViewHolder holder, int position) {
+                    Hashtag tweet=dataset.get(position);
+                    holder.setOnClickListener(tweet,listenerHashtags);
+                    holder.txtTweet.setText(tweet.getTweetText());
+                    holder.setItems(tweet.getHashtags());
+                }
 
 
 
