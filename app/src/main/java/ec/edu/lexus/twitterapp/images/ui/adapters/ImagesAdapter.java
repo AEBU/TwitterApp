@@ -45,6 +45,7 @@ public class ImagesAdapter extends RecyclerView.Adapter<ImagesAdapter.ViewHolder
         Image tweet = dataset.get(position);
         holder.setOnclickListener(tweet, clickListener);
         holder.txtTweet.setText(tweet.getTweetText());
+        holder.txtFav.setText(String.valueOf(tweet.getFavoriteCount()));
         imageLoader.load(holder.imgMedia, tweet.getImageURL());
     }
 
@@ -63,6 +64,8 @@ public class ImagesAdapter extends RecyclerView.Adapter<ImagesAdapter.ViewHolder
         ImageView imgMedia;
         @BindView(R.id.txtTweet)
         TextView txtTweet;
+        @BindView(R.id.txtFav)
+        TextView txtFav;
         private View view;
 
         public ViewHolder(View itemView) {

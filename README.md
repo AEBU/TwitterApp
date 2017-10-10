@@ -2550,6 +2550,80 @@ Commit21
 
 
 
+Ejercicio :Ejercicios
+
+NAMETOOLBAR
+
+
+     Agrega el nombre del usuario que se encuentra conectado en tu aplicación, dentro de la pantalla principal
+
+     Vamos a realizarlo por Inyección de Dependencias
+     Vamos a agregar un mensaje de saludo para el usuario que está conectado en la aplicación
+
+        En strings.xml
+                <string name="hello_user">Hola %s</string> //dice Hola y el nombre del usuario como formato
+    Para Mostrarlo
+        En MainActivity
+            //mando el título al toolbar obteniendo el string y formateandolo al formato necesario
+            setTitle(String.format(getString(R.string.hello_user),"Usuario"));
+
+            //cambiamos "USUARIO" por el usuario que se encuentra conectado
+            //para esto podemos acceder al método estático de Session De Twitter
+            setTitle(String.format(getString(R.string.hello_user),TwitterCore.getInstance().getSessionManager().getActiveSession().getUserName()));
+
+
+AGREGAR CANTIDAD DE FAVORITOS
+
+    agregar a en cada cart de los tweets
+
+    En ContaintImages
+        ...
+        //creamos otro textView
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/activity_horizontal_margin"
+            android:id="@+id/txtFav"
+            android:layout_below="@+id/txtTweet"
+            android:layout_centerHorizontal="true"
+            android:background="@color/colorPrimary"
+            android:textColor="@color/tw__blue_default"
+            />
+
+    En ImagesAdapter
+
+        //Usamos el textView dentro del ViewHolder del ImagesAdapter añadiendolo como  con butterknife y su respectivo holder
+
+
+                @Override
+                     public void onBindViewHolder(ViewHolder holder, int position) {
+                         ....
+                      holder.txtFav.setText(String.valueOf(tweet.getFavoriteCount()));
+
+                 }
+
+
+                //...
+                public class ViewHolder extends RecyclerView.ViewHolder {
+                        ...
+                        @BindView(R.id.txtFav)
+                        TextView txtFav;
+                ...
+g
+
+
+MODIFICA EL CardView
+
+    Mejorar los puntos del CardView, no tenemos la separación que normalmente hay dentro de un cardView, es porque usamos directo la libreriía de soporte es decir sin Layout, antes
+    por lo que aveces no le coloca un padding
+    Por lo que pondrémos el cardView y los cardview se separen y añadimos el esquema de cardView al layout
+
+
+        <android.support.v7.widget.CardView
+           ...
+            card_view:cardUseCompatPadding="true">
+
 
 
 

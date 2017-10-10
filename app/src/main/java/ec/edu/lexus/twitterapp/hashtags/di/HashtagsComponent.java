@@ -14,4 +14,5 @@ import ec.edu.lexus.twitterapp.images.ui.ImagesFragment;
 @Component(modules = {HashtagsModule.class,LibsModule.class})
 public interface HashtagsComponent {
     void inject(HashtagsFragment hashtagsFragment);
+
 }
